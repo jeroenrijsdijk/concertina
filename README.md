@@ -8,13 +8,15 @@ It needs an .abc file as input. Output is a series of buttons, with push/pull ad
 https://thesession.org/  had many .abc files, but therae are many other sites. 
 
 For plotting results, chunky_png is needed. 
+See .png for an example. 
+Red is Pull, Blue is Push.
 
 
 Please note:  
  1. $tinakeys  depends on YOUR concertina. The note of the buttons on yours can be different from mine!
  
  2. this scripts only plots one winner; 
- a few lines earlier you see what possible minor variantions are worth trying:
+ a few lines earlier you see what possible variations are worth trying:
  the notes with '??' have more options. You see option button 25 of 28 to play A2:
   - 28 is in 12 routes, 
   - 25 in 2 routes.
