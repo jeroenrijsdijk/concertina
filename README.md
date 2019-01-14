@@ -20,12 +20,16 @@ Please note:
  2. this scripts only plots a few winners; 
  
  a few lines earlier you see what possible variations are worth trying:
- the notes with '??' have more options. You see option button 25 of 28 to play A2:
-  - 28 is in 12 routes, 
-  - 25 in 2 routes.
+ the notes with '??' have more options. You see option button 14 and 51 to play B2:
+ 
+ " ??:{14=>22, 51=>13}{14=>"LG2-PUSH=B2", 51=>"RC1-PULL=B2"} " 
+ 
+ - 14 is in 22 routes, 
+ - 51 is in 13 routes.
  the notes with OK are pretty sure about. 
  
-these 35 are the best routes for Joe Banes. See PNG for visualisation
+ 
+These 35 are the best routes for Joe Banes. See PNG for visualisation
 
 ??:{14=>22, 51=>13}{14=>"LG2-PUSH=B2", 51=>"RC1-PULL=B2"}
 
