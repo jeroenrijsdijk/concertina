@@ -2,7 +2,7 @@
 Concertina Path finder
 
 
-:: withdrawed :: I will republish the script soon ::
+:: I will republish the script soon ::
 
 
 
@@ -17,14 +17,15 @@ For plotting results, chunky_png is needed. See .png for an example. Red is Pull
 Please note:  
  1. $tinakeys  depends on YOUR concertina. The note of the buttons on yours can be different from mine!
  
- 2. this scripts only plots one winner; 
+ 2. this scripts only plots a few winners; 
+ 
  a few lines earlier you see what possible variations are worth trying:
  the notes with '??' have more options. You see option button 25 of 28 to play A2:
   - 28 is in 12 routes, 
   - 25 in 2 routes.
  the notes with OK are pretty sure about. 
  
-these 14 are the best routes for Patsy Gearys (listen to Bothy Band):
+these 14 are the best routes for Patsy Gearys. See PNG for visualisation
 
 OK:{25=>14}{25=>"LC1-PULL=A2"}
 
