@@ -2,7 +2,7 @@
 Concertina Path finder
 
 
-:: I will republish the script soon ::
+:: I will republish the script later ::
 
 
 
