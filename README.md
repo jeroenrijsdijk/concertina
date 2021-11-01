@@ -9,7 +9,7 @@ Concertina Path finder
 This scripts searches for a way to play a (irish) tune on a concertina
 
 It needs an .abc file as input. Output is a series of buttons, with push/pull added. 
-https://thesession.org/  had many .abc files, but therae are many other sites. 
+https://thesession.org/  has many .abc files. 
 
 For plotting results, chunky_png is needed. See .png for an example. Red is Pull, Blue is Push.
 
