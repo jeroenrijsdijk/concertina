@@ -4,7 +4,7 @@
 
 Paste a tune in ABC notation, click Analyse, and the tool tells you which button to press for each note — and whether to push or pull the bellows.
 
-→ **[Try it online](https://easyconcertina.com)**
+→ **[Try it online](https://concertina.github.io)**
 
 ---
 
@@ -98,11 +98,11 @@ See [`todo.md`](todo.md) for the current wish list.
 
 ## History
 
-Originally written in Ruby in 2015–2018 under the name **MUPHIN**. Refactored and ported to a web tool in 2024.
+Originally written in Ruby in 2015–2018. Refactored and ported to a web tool in 2026, with Claude AI.
 
 ## License
 
-MIT License — Copyright (c) 2024 MUPHIN
+MIT License — Copyright (c) 2015-2026 Jeroen Rijsdijk
 
 ## Support
 
