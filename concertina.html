@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concertina Fingering</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #ddd8d0;
+    --surface:  #ccc6bc;
+    --border:   #b0a898;
+    --text:     #2a2520;
+    --muted:    #6b6259;
+    --push:     #1a4fa8;
+    --pull:     #c0281a;
+    --accent:   #4a3f2f;
+    --ok:       #2e7d32;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Code Pro', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--accent);
+    color: #f0ebe3;
+    padding: 12px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  header span {
+    font-size: 11px;
+    opacity: 0.65;
+    letter-spacing: 0.5px;
+  }
+
+  main { padding: 16px 20px; max-width: 1100px; }
+
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+  }
+
+  .panel-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 140px;
+    background: #f5f2ed;
+    border: 1px solid var(--border);
+    padding: 8px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 4px 8px;
+    font-size: 12px;
+  }
+  .meta-grid .lbl { color: var(--muted); }
+  .meta-grid .val { font-weight: 600; }
+
+  button {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #f0ebe3;
+    border: none;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #2a2018; }
+  button:disabled { background: var(--border); cursor: default; }
+
+  #status {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    min-height: 18px;
+  }
+  #status.err { color: var(--pull); }
+  #status.ok  { color: var(--ok); }
+
+  /* Route table */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+  }
+  th {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding: 4px 8px;
+    text-align: left;
+  }
+  td {
+    padding: 3px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  tr:hover td { background: rgba(0,0,0,0.04); }
+
+  .push { color: var(--push); font-weight: 600; }
+  .pull { color: var(--pull); font-weight: 600; }
+
+  /* Canvas area */
+  #canvas-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  #viz { display: block; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .dot-push { background: var(--push); }
+  .dot-pull { background: var(--pull); }
+  .dot-gray { background: #888; opacity: 0.5; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Concertina Fingering</h1>
+  <span>Anglo · C/G · Optimal fingering finder</span>
+  <a href="help.html" style="margin-left:auto; color:#f0ebe3; font-family:'Oswald',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.5px; text-decoration:none; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; white-space:nowrap;">Help</a>
+  <a href="https://www.paypal.me/muphin" target="_blank" style="background:#009cde; color:#fff; font-family:'Oswald',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.5px; text-decoration:none; padding:6px 12px; white-space:nowrap;">☕ Buy me a coffee</a>
+</header>
+
+<main>
+
+  <div class="row">
+    <!-- ABC input -->
+    <div class="panel" style="flex:2; min-width:300px">
+      <div class="panel-title">ABC Notation</div>
+      <textarea id="abc-input" spellcheck="false">X:1
+T:The Kesh Jig
+R:jig
+M:6/8
+L:1/8
+K:Gmaj
+|:GAG GAB|ABA ABd|egd edB|dBA ABd|
+GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
+    </div>
+
+    <!-- Tune info + run -->
+    <div class="panel" style="flex:1; min-width:200px; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div class="panel-title">Tune Info</div>
+        <div class="meta-grid">
+          <span class="lbl">Title</span>  <span class="val" id="m-title">–</span>
+          <span class="lbl">Key</span>    <span class="val" id="m-key">–</span>
+          <span class="lbl">Rhythm</span> <span class="val" id="m-rhythm">–</span>
+          <span class="lbl">Meter</span>  <span class="val" id="m-meter">–</span>
+          <span class="lbl">Notes</span>  <span class="val" id="m-notes">–</span>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button id="run-btn" onclick="run()">Analyse</button>
+        <div id="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+
+    <div class="row">
+      <!-- Route table -->
+      <div class="panel" style="flex:1; min-width:280px; max-height:500px; overflow-y:auto;">
+        <div class="panel-title">Best Fingering</div>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Note</th><th>Hand</th><th>Row</th><th>Direction</th><th>Button</th></tr>
+          </thead>
+          <tbody id="route-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Visualisatie -->
+      <div class="panel" style="flex:2; min-width:300px;">
+        <div class="panel-title">Button Diagram</div>
+        <div class="legend">
+          <span><span class="dot dot-push"></span>Push</span>
+          <span><span class="dot dot-pull"></span>Pull</span>
+          <span><span class="dot dot-gray"></span>Not used</span>
+          <span style="margin-left:8px; font-size:10px;">Larger = more frequent across best routes</span>
+          <button id="save-btn" onclick="saveImage()" style="margin-left:auto; padding:5px 14px; font-size:12px;">Save Image</button>
+        </div>
+        <div id="canvas-wrap">
+          <canvas id="viz"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// =============================================================================
+//  Concertina key data
+// =============================================================================
+const KEYS_DATA = {
+   1:{side:1,row:1,button:5,pushpull:1,note:"E1"},
+   2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
+   3:{side:1,row:1,button:3,pushpull:1,note:"C#2"},
+   4:{side:1,row:1,button:2,pushpull:1,note:"A2"},
+   5:{side:1,row:1,button:1,pushpull:1,note:"G#2"},
+   6:{side:1,row:2,button:5,pushpull:1,note:"C1"},
+   7:{side:1,row:2,button:4,pushpull:1,note:"G1"},
+   8:{side:1,row:2,button:3,pushpull:1,note:"C2"},
+   9:{side:1,row:2,button:2,pushpull:1,note:"E2"},
+  10:{side:1,row:2,button:1,pushpull:1,note:"G2"},
+  11:{side:1,row:3,button:5,pushpull:1,note:"B1"},
+  12:{side:1,row:3,button:4,pushpull:1,note:"D2"},
+  13:{side:1,row:3,button:3,pushpull:1,note:"G2"},
+  14:{side:1,row:3,button:2,pushpull:1,note:"B2"},
+  15:{side:1,row:3,button:1,pushpull:1,note:"D3"},
+  16:{side:1,row:1,button:5,pushpull:2,note:"F1"},
+  17:{side:1,row:1,button:4,pushpull:2,note:"BB1"},
+  18:{side:1,row:1,button:3,pushpull:2,note:"D#2"},
+  19:{side:1,row:1,button:2,pushpull:2,note:"G2"},
+  20:{side:1,row:1,button:1,pushpull:2,note:"BB2"},
+  21:{side:1,row:2,button:5,pushpull:2,note:"G1"},
+  22:{side:1,row:2,button:4,pushpull:2,note:"B1"},
+  23:{side:1,row:2,button:3,pushpull:2,note:"D2"},
+  24:{side:1,row:2,button:2,pushpull:2,note:"F2"},
+  25:{side:1,row:2,button:1,pushpull:2,note:"A2"},
+  26:{side:1,row:3,button:5,pushpull:2,note:"A1"},
+  27:{side:1,row:3,button:4,pushpull:2,note:"F#2"},
+  28:{side:1,row:3,button:3,pushpull:2,note:"A2"},
+  29:{side:1,row:3,button:2,pushpull:2,note:"C3"},
+  30:{side:1,row:3,button:1,pushpull:2,note:"E3"},
+  31:{side:2,row:1,button:1,pushpull:1,note:"C#3"},
+  32:{side:2,row:1,button:2,pushpull:1,note:"C#3"},
+  33:{side:2,row:1,button:3,pushpull:1,note:"G#3"},
+  34:{side:2,row:1,button:4,pushpull:1,note:"C#4"},
+  35:{side:2,row:1,button:5,pushpull:1,note:"A4"},
+  36:{side:2,row:2,button:1,pushpull:1,note:"C3"},
+  37:{side:2,row:2,button:2,pushpull:1,note:"E3"},
+  38:{side:2,row:2,button:3,pushpull:1,note:"G3"},
+  39:{side:2,row:2,button:4,pushpull:1,note:"C4"},
+  40:{side:2,row:2,button:5,pushpull:1,note:"E4"},
+  41:{side:2,row:3,button:1,pushpull:1,note:"G3"},
+  42:{side:2,row:3,button:2,pushpull:1,note:"B3"},
+  43:{side:2,row:3,button:3,pushpull:1,note:"D4"},
+  44:{side:2,row:3,button:4,pushpull:1,note:"G4"},
+  45:{side:2,row:3,button:5,pushpull:1,note:"D#4"},
+  46:{side:2,row:1,button:1,pushpull:2,note:"C#3"},
+  47:{side:2,row:1,button:2,pushpull:2,note:"D#3"},
+  48:{side:2,row:1,button:3,pushpull:2,note:"G3"},
+  49:{side:2,row:1,button:4,pushpull:2,note:"BB3"},
+  50:{side:2,row:1,button:5,pushpull:2,note:"D4"},
+  51:{side:2,row:2,button:1,pushpull:2,note:"B2"},
+  52:{side:2,row:2,button:2,pushpull:2,note:"D3"},
+  53:{side:2,row:2,button:3,pushpull:2,note:"F3"},
+  54:{side:2,row:2,button:4,pushpull:2,note:"A3"},
+  55:{side:2,row:2,button:5,pushpull:2,note:"B3"},
+  56:{side:2,row:3,button:1,pushpull:2,note:"F#3"},
+  57:{side:2,row:3,button:2,pushpull:2,note:"A3"},
+  58:{side:2,row:3,button:3,pushpull:2,note:"C4"},
+  59:{side:2,row:3,button:4,pushpull:2,note:"E4"},
+  60:{side:2,row:3,button:5,pushpull:2,note:"F#4"}
+};
+
+// =============================================================================
+//  Distance matrix
+// =============================================================================
+function buildDistmat() {
+  const mat = Array.from({length:61}, () => new Array(61).fill(0));
+  for (let f = 1; f <= 60; f++) {
+    for (let t = 1; t <= 60; t++) {
+      if (f === t) { mat[f][t] = -25; continue; }
+      const h = hopp(f, t);
+      mat[f][t] = h === 100 ? 100
+                             : sameSide(f,t) + h + prefRow(t) + prefButton(t) + ppChange(f,t);
+    }
+  }
+  return mat;
+}
+
+function sameSide(f,t) { return KEYS_DATA[f].side === KEYS_DATA[t].side ? -1 : 0; }
+
+function hopp(f,t) {
+  const kf = KEYS_DATA[f], kt = KEYS_DATA[t];
+  if (kf.button !== kt.button || kf.side !== kt.side) return 0;
+  if (kf.row === kt.row && kf.pushpull !== kt.pushpull) return -12; // push-pull: good
+  return 100; // finger hop: bad
+}
+
+function prefRow(t)    { return [2,3].includes(KEYS_DATA[t].row) ? 0 : 15; }
+
+function prefButton(t) {
+  switch(KEYS_DATA[t].button) {
+    case 1: return -7;
+    case 2: return -2;
+    case 5: return  5;
+    default: return 0;
+  }
+}
+
+function ppChange(f,t) { return KEYS_DATA[f].pushpull === KEYS_DATA[t].pushpull ? 0 : -1; }
+
+// =============================================================================
+//  Note-to-buttons lookup (built dynamically from KEYS_DATA)
+// =============================================================================
+function buildNoteKeys() {
+  const map = {};
+  for (let id = 1; id <= 60; id++) {
+    const note = KEYS_DATA[id].note;
+    if (!map[note]) map[note] = [];
+    map[note].push(id);
+  }
+  return map;
+}
+
+// =============================================================================
+//  ABC Parser
+// =============================================================================
+const SHARPS = {
+  "F": ["G","GMaj","Gmaj","GM","D","DMaj","Dmaj","DM","A","AMaj","Amaj","AM",
+        "Em","Emin","Bm","Bmin","Cm","Cmin","Edor","Ador"],
+  "C": ["D","DMaj","Dmaj","DM","A","AMaj","Amaj","AM","E","EMaj","Emaj","EM",
+        "Bm","Bmin","Edor"],
+  "G": ["E","EMaj","Emaj","EM","A","AMaj","Amaj","AM"]
+};
+
+const ABC_TO_NOTE = {
+  "C,":"C1","D,":"D1","E,":"E1","F,":"F1","G,":"G1","A,":"A1","B,":"B1",
+  "C":"C2","D":"D2","E":"E2","F":"F2","G":"G2","A":"A2","B":"B2",
+  "c":"C3","d":"D3","e":"E3","f":"F3","g":"G3","a":"A3","b":"B3",
+  "c'":"C4","d'":"D4","e'":"E4","f'":"F4","g'":"G4","a'":"A4","b'":"B4"
+};
+
+const DELETE_TOKENS = ["|:",":|","::","|]","[|","|","/","~","=",
+                       "0","1","2","3","4","6","8"];
+
+function parseAbc(text) {
+  const tune = {};
+  let rawNotes = "";
+
+  for (const line of text.split(/\r?\n/)) {
+    const l = line.trim();
+    if (l[1] === ":" && l[0] !== "|") {
+      const clean = l.replace(/ /g,"");
+      const type  = clean[0];
+      const val   = clean.slice(2);
+      if (type==="X") tune.number = val;
+      if (type==="T") tune.title  = val;
+      if (type==="R") tune.rhythm = val;
+      if (type==="M") tune.meter  = val;
+      if (type==="L") tune.notelen= val;
+      if (type==="K") tune.key    = val;
+    } else {
+      rawNotes += l;
+    }
+  }
+
+  // Build note mapping with sharps applied
+  const key     = tune.key || "";
+  const mapping = {};
+  for (const [abc, note] of Object.entries(ABC_TO_NOTE)) {
+    const base = abc[0].toUpperCase();
+    if (SHARPS[base] && SHARPS[base].includes(key)) {
+      const sharp = note[0] + "#" + note[1];
+      mapping[abc] = sharp.includes("##") ? note : sharp;
+    } else {
+      mapping[abc] = note;
+    }
+  }
+
+  // Strip bar/rhythm tokens
+  let raw = rawNotes;
+  for (const tok of DELETE_TOKENS) {
+    raw = raw.split(tok).join("");
+  }
+  raw = raw.replace(/[ >]/g,"");
+
+  // Parse notes greedily (longest match first)
+  const notes = [];
+  while (raw.length > 0) {
+    let found = null;
+    for (const len of [2,1,0]) {
+      const s = raw.slice(0, len+1);
+      if (mapping[s] !== undefined) { found = s; break; }
+    }
+    if (found) {
+      notes.push(mapping[found]);
+      raw = raw.slice(found.length);
+    } else {
+      raw = raw.slice(1);
+    }
+  }
+
+  tune.notes = notes;
+  return tune;
+}
+
+// =============================================================================
+//  Beam search
+// =============================================================================
+const MAX_ROUTES  = 4096;
+const UPPER_SCORE = 50;
+
+function calcScore(route, distmat) {
+  let s = startScore(route[0]);
+  for (let i = 0; i < route.length - 1; i++) s += distmat[route[i]][route[i+1]];
+  return s;
+}
+
+function startScore(btn) {
+  const k = KEYS_DATA[btn];
+  let s = [1,2,3].includes(k.button) ? [-5,-4,0][k.button-1]
+        : k.button===4 ? 3 : k.button===5 ? 7 : 0;
+  if ([2,3].includes(k.row)) s -= 5;
+  return s;
+}
+
+function thin(routes, distmat) {
+  let divv = 2.0;
+  while (routes.length > MAX_ROUTES) {
+    const scores  = routes.map(r => calcScore(r, distmat));
+    const sorted  = [...scores].sort((a,b)=>a-b);
+    const cutoff  = sorted[Math.floor(sorted.length / divv)];
+    const trimmed = routes.filter((_,i) => scores[i] <= cutoff);
+    if (trimmed.length === routes.length) {
+      divv += 1/6;
+      if (divv > 20) throw new Error("No solution found for this tune.");
+    } else {
+      routes = trimmed;
+    }
+  }
+  return routes;
+}
+
+function findBestRoute(notes, noteKeys, distmat) {
+  const options = notes.map(n => noteKeys[n] || []).filter(o => o.length > 0);
+  if (options.length === 0) throw new Error("No notes recognised.");
+
+  let routes = options.shift().map(b => [b]);
+  for (const opts of options) {
+    const next = [];
+    for (const route of routes) {
+      for (const btn of opts) {
+        if (distmat[route[route.length-1]][btn] < UPPER_SCORE) {
+          next.push([...route, btn]);
+        }
+      }
+    }
+    routes = next.length > 0 ? next : routes;
+    if (routes.length > MAX_ROUTES) routes = thin(routes, distmat);
+  }
+
+  const scored    = routes.map(r => ({ score: calcScore(r, distmat), route: r }));
+  const minScore  = Math.min(...scored.map(s=>s.score));
+  const winner    = scored.filter(s=>s.score===minScore).map(s=>s.route);
+  const bestRoutes= scored.filter(s=>s.score<=minScore+50).slice(0,50).map(s=>s.route);
+
+  // Per-position summary
+  const summary = winner[0].map((_,i) => {
+    const tally = {};
+    bestRoutes.forEach(r => { tally[r[i]] = (tally[r[i]]||0)+1; });
+    return tally;
+  });
+
+  return { route: winner[0], summary, nBest: bestRoutes.length };
+}
+
+// =============================================================================
+//  Canvas visualizer
+// =============================================================================
+const SYS_W   = 150;   // system width  (one note diagram)
+const SYS_H   =  88;   // system height
+const COLS    =   6;   // systems per row
+const PAD     =   6;   // padding around grid
+const LABEL_H =  14;   // height reserved for note label above system
+
+const COL_PUSH = "#1a4fa8";
+const COL_PULL = "#c0281a";
+const COL_GRAY = "rgba(80,70,60,0.35)";
+
+function btnX(id) {
+  const k    = KEYS_DATA[id];
+  const side = k.side === 2 ? 1 : -1;
+  return Math.round(side * k.button * (SYS_W/2) / 7);
+}
+
+function btnY(id) {
+  const k = KEYS_DATA[id];
+  return Math.round(0.05*SYS_H + (k.row-1)*(0.67*SYS_H/3) + k.button*2);
+}
+
+function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, counts, nBest) {
+  // Label
+  ctx.fillStyle = "#4a3f2f";
+  ctx.font      = "bold 10px 'Source Code Pro', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(noteLabel, xbase + SYS_W/2, ybase + 10);
+
+  const yoff = ybase + LABEL_H;
+
+  // All 60 buttons
+  for (let nn = 1; nn <= 60; nn++) {
+    const x    = xbase + SYS_W/2 + btnX(nn);
+    const y    = yoff              + btnY(nn);
+    const pull = KEYS_DATA[nn].pushpull === 2;
+
+    let r, color;
+    if (nn === chosenBtn) {
+      r     = 7;
+      color = pull ? COL_PULL : COL_PUSH;
+    } else if (counts[nn]) {
+      const frac = counts[nn] / nBest;
+      r     = Math.max(3, Math.ceil(6 * Math.sqrt(frac)));
+      color = pull ? COL_PULL : COL_PUSH;
+      ctx.globalAlpha = 0.55;
+    } else {
+      r     = 3;
+      color = COL_GRAY;
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Note name on chosen button
+  const cx = xbase + SYS_W/2 + btnX(chosenBtn);
+  const cy = yoff              + btnY(chosenBtn);
+  ctx.fillStyle = "#fff";
+  ctx.font      = "bold 7px 'Source Code Pro', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(KEYS_DATA[chosenBtn].note, cx, cy + 2.5);
+}
+
+function renderCanvas(route, summary, nBest, notes) {
+  const canvas = document.getElementById("viz");
+  const nRows  = Math.ceil(route.length / COLS);
+  canvas.width  = PAD*2 + COLS * SYS_W;
+  canvas.height = PAD*2 + nRows * (SYS_H + LABEL_H);
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  route.forEach((btn, i) => {
+    const col   = i % COLS;
+    const row   = Math.floor(i / COLS);
+    const xbase = PAD + col * SYS_W;
+    const ybase = PAD + row * (SYS_H + LABEL_H);
+    drawSystem(ctx, xbase, ybase, `${i+1}. ${notes[i]}`, btn, summary[i], nBest);
+  });
+}
+
+// =============================================================================
+//  Route table
+// =============================================================================
+function renderTable(route, notes) {
+  const tbody = document.getElementById("route-tbody");
+  tbody.innerHTML = "";
+  const rowNames = ["_","t","c","g"];
+  route.forEach((id, i) => {
+    const k   = KEYS_DATA[id];
+    const pp  = k.pushpull === 1 ? "push" : "pull";
+    const cls = k.pushpull === 1 ? "push" : "pull";
+    const tr  = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><strong>${notes[i]}</strong></td>
+      <td>${k.side===1?"left":"right"}</td>
+      <td>${rowNames[k.row]}</td>
+      <td class="${cls}">${pp}</td>
+      <td>${k.button}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// =============================================================================
+//  Main entry
+// =============================================================================
+let distmat   = null;
+let noteKeys  = null;
+let tuneTitle = "";
+
+function saveImage() {
+  const canvas   = document.getElementById("viz");
+  const safeName = tuneTitle.replace(/[^0-9A-Za-z _-]/g, "").trim() || "concertina";
+  const link     = document.createElement("a");
+  link.download  = safeName + "_fingering.png";
+  link.href      = canvas.toDataURL("image/png");
+  link.click();
+}
+
+function run() {
+  const btn    = document.getElementById("run-btn");
+  const status = document.getElementById("status");
+  const text   = document.getElementById("abc-input").value.trim();
+  if (!text) { setStatus("No ABC notation entered.", "err"); return; }
+
+  btn.disabled = true;
+  setStatus("Analysing…", "");
+
+  // Small timeout so browser can render the "Analysing" message
+  setTimeout(() => {
+    try {
+      // Lazy init
+      if (!distmat)  distmat  = buildDistmat();
+      if (!noteKeys) noteKeys = buildNoteKeys();
+
+      const tune = parseAbc(text);
+      const notes = tune.notes;
+
+      // Update meta
+      document.getElementById("m-title").textContent  = tune.title  || "–";
+      document.getElementById("m-key").textContent    = tune.key    || "–";
+      document.getElementById("m-rhythm").textContent = tune.rhythm || "–";
+      document.getElementById("m-meter").textContent  = tune.meter  || "–";
+      document.getElementById("m-notes").textContent  = notes.length;
+      tuneTitle = tune.title || "";
+
+      if (notes.length === 0) throw new Error("No notes found. Please check your ABC notation.");
+
+      const { route, summary, nBest } = findBestRoute(notes, noteKeys, distmat);
+
+      renderTable(route, notes);
+      renderCanvas(route, summary, nBest, notes);
+
+      document.getElementById("results").classList.remove("hidden");
+      setStatus(`Done — ${notes.length} notes, ${nBest} best routes analysed.`, "ok");
+
+    } catch(e) {
+      setStatus(e.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }, 20);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className   = cls;
+}
+</script>
+</body>
+</html>

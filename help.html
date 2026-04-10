@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concertina Fingering – Help</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #ddd8d0;
+    --surface: #ccc6bc;
+    --border:  #b0a898;
+    --text:    #2a2520;
+    --muted:   #6b6259;
+    --push:    #1a4fa8;
+    --pull:    #c0281a;
+    --accent:  #4a3f2f;
+    --ok:      #2e7d32;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Code Pro', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  header {
+    background: var(--accent);
+    color: #f0ebe3;
+    padding: 12px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  header .sub {
+    font-size: 11px;
+    opacity: 0.65;
+    letter-spacing: 0.5px;
+  }
+  header a.back {
+    margin-left: auto;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #f0ebe3;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 5px 12px;
+    transition: background 0.15s;
+  }
+  header a.back:hover { background: rgba(255,255,255,0.12); }
+
+  .page {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* Section headings */
+  h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 40px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--border);
+  }
+  h2:first-of-type { margin-top: 24px; }
+
+  h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 6px;
+  }
+
+  p { margin-bottom: 10px; }
+
+  ul, ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+  }
+  li { margin-bottom: 4px; }
+
+  /* Inline code */
+  code {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+  }
+
+  /* Code block */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-size: 12px;
+    margin: 10px 0 14px;
+    line-height: 1.6;
+  }
+
+  /* Callout box */
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--ok);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .note strong { color: var(--text); }
+
+  .warn {
+    border-left-color: var(--pull);
+  }
+
+  /* Dot legend */
+  .dot-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0 14px;
+  }
+  .dot-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-push  { background: var(--push); }
+  .dot-pull  { background: var(--pull); }
+  .dot-small { background: var(--push); opacity: 0.45; width: 8px; height: 8px; }
+  .dot-gray  { background: #888; opacity: 0.4; }
+
+  /* Table */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+    margin: 10px 0 16px;
+  }
+  th {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding: 5px 10px;
+    text-align: left;
+    background: var(--surface);
+  }
+  td {
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+
+  /* Concertina schematic */
+  .schema {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin: 12px 0 16px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hand {
+    text-align: center;
+  }
+  .hand-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .brow {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .row-label {
+    font-size: 10px;
+    color: var(--muted);
+    width: 12px;
+    text-align: right;
+  }
+  .btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #f0ebe3;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Source Code Pro', monospace;
+  }
+  .btn.push { background: var(--push); }
+  .btn.pull { background: var(--pull); }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0 0;
+  }
+  .footer {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Concertina Fingering</h1>
+  <span class="sub">Help &amp; Manual</span>
+  <a class="back" href="concertina.html">← Back to tool</a>
+</header>
+
+<div class="page">
+
+  <h2>What does this tool do?</h2>
+  <p>
+    This tool finds the <strong>optimal fingering route</strong> for any tune on a
+    <strong>30-button Anglo concertina in C/G</strong>.
+    You paste in a tune in ABC notation, and the tool tells you which button to press
+    for each note — and whether to push or pull the bellows.
+  </p>
+  <p>
+    Because many notes can be played on more than one button, there are often hundreds
+    or thousands of possible combinations for a whole tune. This tool searches through
+    all of them and picks the route that is easiest to play — minimising awkward jumps,
+    finger hops, and unnecessary bellows reversals.
+  </p>
+
+  <h2>The Anglo concertina</h2>
+  <p>
+    An Anglo concertina is a <strong>bisonoric</strong> instrument: each button produces
+    a different note depending on whether you push or pull the bellows. A standard
+    30-button C/G Anglo has two sides (left hand and right hand), each with three rows
+    of five buttons.
+  </p>
+
+  <div class="schema">
+    <div class="hand">
+      <div class="hand-label">Left hand</div>
+      <div class="rows">
+        <div class="brow"><span class="row-label">t</span>
+          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+        </div>
+        <div class="brow"><span class="row-label">c</span>
+          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+        </div>
+        <div class="brow"><span class="row-label">g</span>
+          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+        </div>
+      </div>
+    </div>
+    <div class="hand">
+      <div class="hand-label">Right hand</div>
+      <div class="rows">
+        <div class="brow">
+          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">t</span>
+        </div>
+        <div class="brow">
+          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">c</span>
+        </div>
+        <div class="brow">
+          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">g</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Rows are named <strong>t</strong>, <strong>c</strong>, and <strong>g</strong>
+    (the main push notes of each row on the left side).
+    Buttons are numbered 1–5, with 1 closest to the player.
+    This tool covers all 60 button positions (30 push + 30 pull).
+  </p>
+
+  <h2>Button map (C/G Anglo, this instrument)</h2>
+  <p>
+    The note layout below matches exactly what is stored in <code>KEYS_DATA</code>.
+    If your concertina differs, the source code can be adapted.
+    <span class="push-text">Blue = push</span> &nbsp; <span class="pull-text">Red = pull</span>.
+  </p>
+
+  <style>
+    .push-text { color: var(--push); font-weight: 600; }
+    .pull-text  { color: var(--pull); font-weight: 600; }
+    .btnmap {
+      border-collapse: collapse;
+      font-size: 11px;
+      width: 100%;
+      margin: 10px 0 20px;
+    }
+    .btnmap th {
+      font-family: 'Oswald', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: #f0ebe3;
+      padding: 5px 8px;
+      text-align: center;
+    }
+    .btnmap th.row-h {
+      background: var(--surface);
+      color: var(--muted);
+      width: 28px;
+    }
+    .btnmap th.hand-h {
+      background: var(--accent);
+      color: #f0ebe3;
+    }
+    .btnmap td {
+      text-align: center;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .btnmap td .p { color: var(--push); font-weight: 600; display: block; }
+    .btnmap td .u { color: var(--pull); display: block; }
+    .btnmap td.row-cell {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface);
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+    .btnmap tr:nth-child(even) td { background: rgba(0,0,0,0.03); }
+    .sep { width: 16px; background: transparent !important; border: none !important; }
+  </style>
+
+  <table class="btnmap">
+    <thead>
+      <tr>
+        <th class="row-h"></th>
+        <th class="hand-h" colspan="5">← Left hand (outer to inner)</th>
+        <th class="sep"></th>
+        <th class="hand-h" colspan="5">Right hand (inner to outer) →</th>
+        <th class="row-h"></th>
+      </tr>
+      <tr>
+        <th class="row-h">Row</th>
+        <th>btn 5</th><th>btn 4</th><th>btn 3</th><th>btn 2</th><th>btn 1</th>
+        <th class="sep"></th>
+        <th>btn 1</th><th>btn 2</th><th>btn 3</th><th>btn 4</th><th>btn 5</th>
+        <th class="row-h">Row</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Row t -->
+      <tr>
+        <td class="row-cell">t</td>
+        <td><span class="p">E1</span><span class="u">F1</span></td>
+        <td><span class="p">A1</span><span class="u">B♭1</span></td>
+        <td><span class="p">C#2</span><span class="u">D#2</span></td>
+        <td><span class="p">A2</span><span class="u">G2</span></td>
+        <td><span class="p">G#2</span><span class="u">B♭2</span></td>
+        <td class="sep"></td>
+        <td><span class="p">C#3</span><span class="u">C#3</span></td>
+        <td><span class="p">C#3</span><span class="u">D#3</span></td>
+        <td><span class="p">G#3</span><span class="u">G3</span></td>
+        <td><span class="p">C#4</span><span class="u">B♭3</span></td>
+        <td><span class="p">A4</span><span class="u">D4</span></td>
+        <td class="row-cell">t</td>
+      </tr>
+      <!-- Row c -->
+      <tr>
+        <td class="row-cell">c</td>
+        <td><span class="p">C1</span><span class="u">G1</span></td>
+        <td><span class="p">G1</span><span class="u">B1</span></td>
+        <td><span class="p">C2</span><span class="u">D2</span></td>
+        <td><span class="p">E2</span><span class="u">F2</span></td>
+        <td><span class="p">G2</span><span class="u">A2</span></td>
+        <td class="sep"></td>
+        <td><span class="p">C3</span><span class="u">B2</span></td>
+        <td><span class="p">E3</span><span class="u">D3</span></td>
+        <td><span class="p">G3</span><span class="u">F3</span></td>
+        <td><span class="p">C4</span><span class="u">A3</span></td>
+        <td><span class="p">E4</span><span class="u">B3</span></td>
+        <td class="row-cell">c</td>
+      </tr>
+      <!-- Row g -->
+      <tr>
+        <td class="row-cell">g</td>
+        <td><span class="p">B1</span><span class="u">A1</span></td>
+        <td><span class="p">D2</span><span class="u">F#2</span></td>
+        <td><span class="p">G2</span><span class="u">A2</span></td>
+        <td><span class="p">B2</span><span class="u">C3</span></td>
+        <td><span class="p">D3</span><span class="u">E3</span></td>
+        <td class="sep"></td>
+        <td><span class="p">G3</span><span class="u">F#3</span></td>
+        <td><span class="p">B3</span><span class="u">A3</span></td>
+        <td><span class="p">D4</span><span class="u">C4</span></td>
+        <td><span class="p">G4</span><span class="u">E4</span></td>
+        <td><span class="p">D#4</span><span class="u">F#4</span></td>
+        <td class="row-cell">g</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>How to use the tool</h2>
+
+  <h3>1. Paste your ABC notation</h3>
+  <p>
+    Copy a tune in ABC format and paste it into the text area on the left.
+    You can find thousands of tunes in ABC format at sites like
+    <a href="https://thesession.org" target="_blank">thesession.org</a> or
+    <a href="https://abcnotation.com" target="_blank">abcnotation.com</a>.
+  </p>
+  <p>A minimal example:</p>
+  <pre>X:1
+T:The Kesh Jig
+R:jig
+M:6/8
+L:1/8
+K:Gmaj
+|:GAG GAB|ABA ABd|egd edB|dBA ABd:|</pre>
+
+  <h3>2. Click Analyse</h3>
+  <p>
+    The tool parses the tune, reads the key signature, and runs the search.
+    For most tunes this takes well under a second.
+    The Tune Info panel on the right shows the metadata extracted from the ABC headers.
+  </p>
+
+  <h3>3. Read the results</h3>
+  <p>Two panels appear:</p>
+  <ul>
+    <li><strong>Best Fingering</strong> — a table with one row per note, showing which hand, row, direction (push/pull), and button number to use.</li>
+    <li><strong>Button Diagram</strong> — a visual overview of all 60 buttons for each note in the tune.</li>
+  </ul>
+
+  <h2>Reading the button diagram</h2>
+  <p>Each small diagram represents one note in the tune, labelled by position and note name (e.g. <code>3. G3</code>). Inside each diagram, all 60 buttons are shown as dots:</p>
+
+  <div class="dot-row">
+    <div class="dot-item"><div class="dot dot-push"></div> <span><strong>Large blue dot</strong> — the recommended button, pressed on the push stroke.</span></div>
+    <div class="dot-item"><div class="dot dot-pull"></div> <span><strong>Large red dot</strong> — the recommended button, pressed on the pull stroke.</span></div>
+    <div class="dot-item"><div class="dot dot-small"></div> <span><strong>Smaller blue/red dot</strong> — an alternative button that also appears in the best routes. Larger = used more often.</span></div>
+    <div class="dot-item"><div class="dot dot-gray"></div> <span><strong>Small grey dot</strong> — button not used for this note in any of the best routes.</span></div>
+  </div>
+
+  <p>Example — three consecutive notes from a jig in G (G3, A3, B3):</p>
+  <canvas id="example-canvas" style="border:1px solid var(--border); background:#fff; display:block; margin: 10px 0 16px;"></canvas>
+  <script>
+  (function() {
+    const KEYS = {
+       1:{side:1,row:1,button:5,pushpull:1,note:"E1"},  2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
+       3:{side:1,row:1,button:3,pushpull:1,note:"C#2"}, 4:{side:1,row:1,button:2,pushpull:1,note:"A2"},
+       5:{side:1,row:1,button:1,pushpull:1,note:"G#2"}, 6:{side:1,row:2,button:5,pushpull:1,note:"C1"},
+       7:{side:1,row:2,button:4,pushpull:1,note:"G1"},  8:{side:1,row:2,button:3,pushpull:1,note:"C2"},
+       9:{side:1,row:2,button:2,pushpull:1,note:"E2"}, 10:{side:1,row:2,button:1,pushpull:1,note:"G2"},
+      11:{side:1,row:3,button:5,pushpull:1,note:"B1"}, 12:{side:1,row:3,button:4,pushpull:1,note:"D2"},
+      13:{side:1,row:3,button:3,pushpull:1,note:"G2"}, 14:{side:1,row:3,button:2,pushpull:1,note:"B2"},
+      15:{side:1,row:3,button:1,pushpull:1,note:"D3"}, 16:{side:1,row:1,button:5,pushpull:2,note:"F1"},
+      17:{side:1,row:1,button:4,pushpull:2,note:"BB1"},18:{side:1,row:1,button:3,pushpull:2,note:"D#2"},
+      19:{side:1,row:1,button:2,pushpull:2,note:"G2"}, 20:{side:1,row:1,button:1,pushpull:2,note:"BB2"},
+      21:{side:1,row:2,button:5,pushpull:2,note:"G1"}, 22:{side:1,row:2,button:4,pushpull:2,note:"B1"},
+      23:{side:1,row:2,button:3,pushpull:2,note:"D2"}, 24:{side:1,row:2,button:2,pushpull:2,note:"F2"},
+      25:{side:1,row:2,button:1,pushpull:2,note:"A2"}, 26:{side:1,row:3,button:5,pushpull:2,note:"A1"},
+      27:{side:1,row:3,button:4,pushpull:2,note:"F#2"},28:{side:1,row:3,button:3,pushpull:2,note:"A2"},
+      29:{side:1,row:3,button:2,pushpull:2,note:"C3"}, 30:{side:1,row:3,button:1,pushpull:2,note:"E3"},
+      31:{side:2,row:1,button:1,pushpull:1,note:"C#3"},32:{side:2,row:1,button:2,pushpull:1,note:"C#3"},
+      33:{side:2,row:1,button:3,pushpull:1,note:"G#3"},34:{side:2,row:1,button:4,pushpull:1,note:"C#4"},
+      35:{side:2,row:1,button:5,pushpull:1,note:"A4"}, 36:{side:2,row:2,button:1,pushpull:1,note:"C3"},
+      37:{side:2,row:2,button:2,pushpull:1,note:"E3"}, 38:{side:2,row:2,button:3,pushpull:1,note:"G3"},
+      39:{side:2,row:2,button:4,pushpull:1,note:"C4"}, 40:{side:2,row:2,button:5,pushpull:1,note:"E4"},
+      41:{side:2,row:3,button:1,pushpull:1,note:"G3"}, 42:{side:2,row:3,button:2,pushpull:1,note:"B3"},
+      43:{side:2,row:3,button:3,pushpull:1,note:"D4"}, 44:{side:2,row:3,button:4,pushpull:1,note:"G4"},
+      45:{side:2,row:3,button:5,pushpull:1,note:"D#4"},46:{side:2,row:1,button:1,pushpull:2,note:"C#3"},
+      47:{side:2,row:1,button:2,pushpull:2,note:"D#3"},48:{side:2,row:1,button:3,pushpull:2,note:"G3"},
+      49:{side:2,row:1,button:4,pushpull:2,note:"BB3"},50:{side:2,row:1,button:5,pushpull:2,note:"D4"},
+      51:{side:2,row:2,button:1,pushpull:2,note:"B2"}, 52:{side:2,row:2,button:2,pushpull:2,note:"D3"},
+      53:{side:2,row:2,button:3,pushpull:2,note:"F3"}, 54:{side:2,row:2,button:4,pushpull:2,note:"A3"},
+      55:{side:2,row:2,button:5,pushpull:2,note:"B3"}, 56:{side:2,row:3,button:1,pushpull:2,note:"F#3"},
+      57:{side:2,row:3,button:2,pushpull:2,note:"A3"}, 58:{side:2,row:3,button:3,pushpull:2,note:"C4"},
+      59:{side:2,row:3,button:4,pushpull:2,note:"E4"}, 60:{side:2,row:3,button:5,pushpull:2,note:"F#4"}
+    };
+
+    const SW = 150, SH = 88, PAD = 10, LABEL_H = 14;
+
+    // Three example notes: G3 → button 38 (push right c1), A3 → button 54 (pull right c4), B3 → button 42 (push right g2)
+    const examples = [
+      { label: "1. G3", chosen: 38, alts: {41: 0.6, 48: 0.3} },
+      { label: "2. A3", chosen: 54, alts: {57: 0.7} },
+      { label: "3. B3", chosen: 42, alts: {55: 0.5} }
+    ];
+
+    const canvas = document.getElementById("example-canvas");
+    canvas.width  = PAD * 2 + examples.length * SW;
+    canvas.height = PAD * 2 + SH + LABEL_H;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    function btnX(id) {
+      const k = KEYS[id], side = k.side === 2 ? 1 : -1;
+      return Math.round(side * k.button * (SW/2) / 7);
+    }
+    function btnY(id) {
+      const k = KEYS[id];
+      return Math.round(0.05*SH + (k.row-1)*(0.67*SH/3) + k.button*2);
+    }
+
+    examples.forEach((ex, i) => {
+      const xbase = PAD + i * SW;
+      const ybase = PAD;
+
+      // Label
+      ctx.fillStyle = "#4a3f2f";
+      ctx.font = "bold 10px 'Source Code Pro', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(ex.label, xbase + SW/2, ybase + 10);
+
+      const yoff = ybase + LABEL_H;
+
+      for (let nn = 1; nn <= 60; nn++) {
+        const x = xbase + SW/2 + btnX(nn);
+        const y = yoff + btnY(nn);
+        const pull = KEYS[nn].pushpull === 2;
+
+        ctx.globalAlpha = 1.0;
+        if (nn === ex.chosen) {
+          ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2);
+          ctx.fillStyle = pull ? "#c0281a" : "#1a4fa8";
+          ctx.fill();
+          // note label inside
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 6px 'Source Code Pro', monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(KEYS[nn].note, x, y + 2);
+        } else if (ex.alts[nn]) {
+          const r = Math.max(3, Math.ceil(6 * Math.sqrt(ex.alts[nn])));
+          ctx.globalAlpha = 0.55;
+          ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+          ctx.fillStyle = pull ? "#c0281a" : "#1a4fa8";
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        } else {
+          ctx.globalAlpha = 0.35;
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2);
+          ctx.fillStyle = "#888";
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+      }
+    });
+  })();
+  </script>
+
+  <p>
+    Left-hand buttons appear on the left side of each diagram, right-hand buttons on the right.
+    Within each side, button 1 is closest to the centre and button 5 is outermost.
+    The three rows (t, c, g) run top to bottom.
+  </p>
+
+  <h2>ABC notation basics</h2>
+  <p>
+    ABC is a text-based music notation format. Here are the header fields this tool uses:
+  </p>
+
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>X:</code></td><td>Tune index number</td><td><code>X:1</code></td></tr>
+      <tr><td><code>T:</code></td><td>Title</td><td><code>T:The Kesh Jig</code></td></tr>
+      <tr><td><code>R:</code></td><td>Rhythm / tune type</td><td><code>R:jig</code></td></tr>
+      <tr><td><code>M:</code></td><td>Time signature</td><td><code>M:6/8</code></td></tr>
+      <tr><td><code>L:</code></td><td>Default note length</td><td><code>L:1/8</code></td></tr>
+      <tr><td><code>K:</code></td><td>Key signature</td><td><code>K:Gmaj</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Note notation</h3>
+  <table>
+    <thead><tr><th>ABC</th><th>Note</th><th>Octave</th></tr></thead>
+    <tbody>
+      <tr><td><code>C, D, E,</code> …</td><td>C, D, E …</td><td>Octave 1 (very low)</td></tr>
+      <tr><td><code>C D E</code> …</td><td>C, D, E …</td><td>Octave 2</td></tr>
+      <tr><td><code>c d e</code> …</td><td>C, D, E …</td><td>Octave 3 (middle)</td></tr>
+      <tr><td><code>c' d' e'</code> …</td><td>C, D, E …</td><td>Octave 4 (high)</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Sharps in the key signature are applied automatically from the <code>K:</code> field.
+    Explicit accidentals (<code>^</code> sharp, <code>_</code> flat) in the note line
+    are not yet supported — these are stripped during parsing.
+  </p>
+
+  <h2>Supported keys</h2>
+  <p>
+    The tool automatically applies the correct sharps for the following keys:
+  </p>
+  <table>
+    <thead><tr><th>Note sharpened</th><th>Keys where it applies</th></tr></thead>
+    <tbody>
+      <tr><td>F → F#</td><td>G, D, A, Em, Bm, Cm, Edor, Ador</td></tr>
+      <tr><td>C → C#</td><td>D, A, E, Bm, Edor</td></tr>
+      <tr><td>G → G#</td><td>E, A</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Keys not in this list are treated as having no sharps (e.g. C major, A minor, D Dorian).
+  </p>
+
+  <h2>How the algorithm works</h2>
+  <p>
+    The search is a <strong>beam search</strong>. For each note in the tune, all possible
+    buttons that produce that note are looked up. The algorithm then builds all combinations,
+    step by step, keeping only the most promising routes at each step.
+  </p>
+  <p>
+    Each transition between two buttons gets a <strong>score</strong> based on:
+  </p>
+  <ul>
+    <li>Same hand as the previous note → small bonus</li>
+    <li>Same button, different direction (push→pull or pull→push) → bonus (this is natural bellows reversal)</li>
+    <li>Same finger jumping to another button → heavy penalty</li>
+    <li>Preferred rows (c and g) → bonus</li>
+    <li>Preferred button numbers (1 and 2) → small bonus</li>
+    <li>Outer buttons (5) → small penalty</li>
+  </ul>
+  <p>
+    When the number of routes exceeds 4,096, the worst-scoring routes are pruned.
+    The route with the lowest total score is returned as the best fingering.
+  </p>
+
+  <h2>Limitations</h2>
+  <ul>
+    <li>The tool is tuned for a standard <strong>30-button C/G Anglo concertina</strong> only.</li>
+    <li>Notes outside the instrument's range (roughly E1–F#4) are silently skipped.</li>
+    <li>Explicit accidentals (<code>^c</code>, <code>_B</code>) in the note line are not yet parsed.</li>
+    <li>Chords (multiple simultaneous notes) in ABC notation are not supported.</li>
+    <li>The algorithm finds an optimal route, but "optimal" is based on a scoring model — experienced players may prefer different choices in some passages.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Tip:</strong> If you get unexpected results, check that the <code>K:</code>
+    key field is present and correctly spelled in your ABC. The key signature has a big
+    effect on which notes get sharpened.
+  </div>
+
+  <h2>About</h2>
+  <p>
+    This tool was originally written in Ruby in 2015–2018 under the name <strong>MUPHIN</strong>.
+    The JavaScript port and web interface were created in 2024.
+    The source code is available publicly — feel free to study, adapt, or improve it.
+  </p>
+  <p>
+    If this tool has been useful to you, consider buying the author a coffee:
+    <a href="https://www.paypal.me/muphin" target="_blank">paypal.me/muphin</a>
+  </p>
+
+  <hr>
+  <p class="footer">
+    Concertina Fingering &nbsp;·&nbsp; Anglo C/G &nbsp;·&nbsp;
+    <a href="concertina.html">← Back to tool</a>
+  </p>
+
+</div>
+</body>
+</html>
