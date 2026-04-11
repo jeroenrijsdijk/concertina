@@ -173,6 +173,59 @@
   .dot-gray { background: #888; opacity: 0.5; }
 
   .hidden { display: none; }
+
+  /* Fullscreen modal */
+  #fs-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 1000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  #fs-overlay.active { display: flex; }
+
+  #fs-toolbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--accent);
+    color: #f0ebe3;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  #fs-toolbar .legend-item { display: flex; align-items: center; gap: 5px; }
+  #fs-toolbar .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  #fs-close {
+    margin-left: auto;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: transparent;
+    color: #f0ebe3;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 4px 14px;
+    cursor: pointer;
+  }
+  #fs-close:hover { background: rgba(255,255,255,0.12); }
+
+  #fs-scroll {
+    overflow: auto;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 16px;
+  }
+  #fs-canvas { display: block; background: #fff; }
 </style>
 </head>
 <body>
@@ -262,6 +315,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
           <span><span class="dot dot-gray"></span>Not used</span>
           <span style="margin-left:8px; font-size:10px;">Larger = more frequent across best routes</span>
           <button id="save-btn" onclick="saveImage()" style="margin-left:auto; padding:5px 14px; font-size:12px;">Save Image</button>
+          <button onclick="openFullscreen()" style="padding:5px 14px; font-size:12px;">Full Screen</button>
         </div>
         <div id="canvas-wrap">
           <canvas id="viz"></canvas>
@@ -271,6 +325,20 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
 
   </div>
 </main>
+
+<!-- Fullscreen modal -->
+<div id="fs-overlay" role="dialog" aria-modal="true">
+  <div id="fs-toolbar">
+    <span class="legend-item"><span class="dot" style="background:var(--push)"></span> Push</span>
+    <span class="legend-item"><span class="dot" style="background:var(--pull)"></span> Pull</span>
+    <span class="legend-item"><span class="dot" style="background:#888; opacity:.5"></span> Not used</span>
+    <span id="fs-title" style="margin-left:12px; font-weight:600;"></span>
+    <button id="fs-close" onclick="closeFullscreen()">✕ Close</button>
+  </div>
+  <div id="fs-scroll">
+    <canvas id="fs-canvas"></canvas>
+  </div>
+</div>
 
 <script>
 // =============================================================================
@@ -788,6 +856,33 @@ function setStatus(msg, cls) {
   el.textContent = msg;
   el.className   = cls;
 }
+
+// =============================================================================
+//  Fullscreen modal
+// =============================================================================
+function openFullscreen() {
+  const src = document.getElementById("viz");
+  if (!src.width) return;
+
+  // Copy canvas content to the fullscreen canvas
+  const dst = document.getElementById("fs-canvas");
+  dst.width  = src.width;
+  dst.height = src.height;
+  dst.getContext("2d").drawImage(src, 0, 0);
+
+  document.getElementById("fs-title").textContent = tuneTitle || "";
+  document.getElementById("fs-overlay").classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeFullscreen() {
+  document.getElementById("fs-overlay").classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeFullscreen();
+});
 </script>
 </body>
 </html>
