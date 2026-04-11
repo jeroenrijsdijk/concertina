@@ -727,10 +727,195 @@ function renderTable(route, notes) {
 //  Layout management
 // =============================================================================
 function downloadLayout() {
-  const layout = { name: document.getElementById("layout-name").textContent, ...KEYS_DATA };
-  const blob   = new Blob([JSON.stringify(layout, null, 2)], { type: "application/json" });
-  const link   = document.createElement("a");
-  link.download = "concertina-layout.json";
+  const layoutName = document.getElementById("layout-name").textContent;
+  const jsonData   = { name: layoutName, ...KEYS_DATA };
+  const jsonStr    = JSON.stringify(jsonData, null, 2);
+
+  // Build a canvas diagram of all 60 buttons with IDs labeled
+  const cvs    = document.createElement("canvas");
+  const BW     = 900;   // canvas width
+  const BH     = 520;   // canvas height
+  cvs.width    = BW;
+  cvs.height   = BH;
+  const ctx    = cvs.getContext("2d");
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, BW, BH);
+
+  // Layout: left hand (side=1) on left, right hand (side=2) on right
+  // Rows top-to-bottom: t(1), c(2), g(3)
+  // Left hand: buttons 5→1 left to right; Right hand: buttons 1→5 left to right
+  const COL_W   = BW / 2 - 30;   // width per hand
+  const ROW_H   = 120;
+  const PAD_X   = 20;
+  const PAD_Y   = 60;
+  const BTN_R   = 26;
+
+  // Hand labels
+  ctx.font = "bold 13px monospace";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#4a3f2f";
+  ctx.fillText("LEFT HAND", PAD_X + COL_W / 2, 24);
+  ctx.fillText("RIGHT HAND", BW / 2 + 30 + COL_W / 2, 24);
+
+  // Row labels
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#6b6259";
+  ["t", "c", "g"].forEach((r, i) => {
+    ctx.fillText("row " + r, PAD_X - 4, PAD_Y + i * ROW_H + BTN_R + 4);
+  });
+
+  // Push/pull legend
+  ctx.font = "11px monospace";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#1a4fa8"; ctx.fillText("PUSH (pushpull=1)", 20, BH - 30);
+  ctx.fillStyle = "#c0281a"; ctx.fillText("PULL (pushpull=2)", 20, BH - 14);
+
+  for (let id = 1; id <= 60; id++) {
+    const k    = KEYS_DATA[id];
+    if (!k) continue;
+    const side = k.side;       // 1=left, 2=right
+    const row  = k.row - 1;   // 0-based
+    const btn  = k.button;    // 1..5
+    const pp   = k.pushpull;  // 1=push, 2=pull
+
+    // X position: left hand btn5→1 = left→right; right hand btn1→5 = left→right
+    let x;
+    if (side === 1) {
+      x = PAD_X + (5 - btn) * (COL_W / 5) + COL_W / 10;
+    } else {
+      x = BW / 2 + 30 + (btn - 1) * (COL_W / 5) + COL_W / 10;
+    }
+    const y = PAD_Y + row * ROW_H + (pp === 1 ? 0 : BTN_R * 2 + 8);
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(x, y, BTN_R, 0, Math.PI * 2);
+    ctx.fillStyle   = pp === 1 ? "#dde8f8" : "#fde8e6";
+    ctx.strokeStyle = pp === 1 ? "#1a4fa8" : "#c0281a";
+    ctx.lineWidth   = 2;
+    ctx.fill();
+    ctx.stroke();
+
+    // Button id (large)
+    ctx.fillStyle   = "#2a2520";
+    ctx.font        = "bold 11px monospace";
+    ctx.textAlign   = "center";
+    ctx.fillText(id, x, y - 4);
+
+    // Note name
+    ctx.font        = "9px monospace";
+    ctx.fillStyle   = pp === 1 ? "#1a4fa8" : "#c0281a";
+    ctx.fillText(k.note, x, y + 8);
+
+    // btn number (tiny, bottom)
+    ctx.font        = "8px monospace";
+    ctx.fillStyle   = "#6b6259";
+    ctx.fillText("btn" + btn, x, y + 19);
+  }
+
+  // Row separators
+  ctx.strokeStyle = "#b0a898";
+  ctx.lineWidth   = 0.5;
+  ctx.setLineDash([4, 4]);
+  [1, 2].forEach(i => {
+    const lineY = PAD_Y + i * ROW_H - 10;
+    ctx.beginPath();
+    ctx.moveTo(PAD_X, lineY);
+    ctx.lineTo(BW - PAD_X, lineY);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Centre divider
+  ctx.strokeStyle = "#4a3f2f";
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(BW / 2 + 15, 36);
+  ctx.lineTo(BW / 2 + 15, BH - 10);
+  ctx.stroke();
+
+  const imgData = cvs.toDataURL("image/png");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Concertina Layout Template – ${layoutName}</title>
+<style>
+  body { font-family: monospace; font-size: 13px; background: #ddd8d0; color: #2a2520; max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1   { font-family: sans-serif; font-size: 20px; margin-bottom: 4px; }
+  h2   { font-family: sans-serif; font-size: 14px; margin: 28px 0 8px; color: #4a3f2f; border-bottom: 2px solid #b0a898; padding-bottom: 3px; }
+  p    { margin-bottom: 8px; line-height: 1.6; }
+  img  { border: 1px solid #b0a898; display: block; margin: 12px 0; max-width: 100%; }
+  table { border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th   { background: #4a3f2f; color: #f0ebe3; padding: 5px 12px; text-align: left; }
+  td   { border-bottom: 1px solid #b0a898; padding: 4px 12px; }
+  code { background: #ccc6bc; padding: 1px 5px; }
+  pre  { background: #ccc6bc; border: 1px solid #b0a898; padding: 14px; overflow-x: auto; font-size: 11px; line-height: 1.5; max-height: 400px; }
+  .push { color: #1a4fa8; font-weight: bold; }
+  .pull { color: #c0281a; }
+</style>
+</head>
+<body>
+
+<h1>Concertina Layout Template</h1>
+<p>Layout name: <strong>${layoutName}</strong></p>
+<p>
+  This file is a template for the <a href="https://jeroenrijsdijk.github.io/concertina/concertina.html">Concertina Fingering</a> tool.
+  Edit the JSON at the bottom of this page to match your own instrument, then save it as a <code>.json</code> file and upload it using the <strong>Upload layout</strong> button.
+</p>
+
+<h2>Button map — all 60 positions</h2>
+<p>
+  Each circle is one button entry in the JSON. The large number is the button <code>id</code> (key in the JSON).
+  <span class="push">Blue = push (pushpull: 1)</span> &nbsp; <span class="pull">Red = pull (pushpull: 2)</span>.
+</p>
+<img src="${imgData}" alt="Button map">
+
+<h2>Field reference</h2>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Values</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>side</code></td><td>integer</td><td>1 = left hand, 2 = right hand</td><td>Which side of the concertina</td></tr>
+    <tr><td><code>row</code></td><td>integer</td><td>1 = t row, 2 = c row, 3 = g row</td><td>Which row of buttons</td></tr>
+    <tr><td><code>button</code></td><td>integer</td><td>1 (closest to player) – 5 (outermost)</td><td>Button position within the row</td></tr>
+    <tr><td><code>pushpull</code></td><td>integer</td><td>1 = push, 2 = pull</td><td>Bellows direction</td></tr>
+    <tr><td><code>note</code></td><td>string</td><td>e.g. <code>"G3"</code>, <code>"F#2"</code>, <code>"BB1"</code></td><td>Note produced. Octave number after letter. Use <code>#</code> for sharp, <code>B</code> (capital) for flat.</td></tr>
+  </tbody>
+</table>
+
+<p>
+  The JSON has 60 entries (ids 1–60): each push button and its pull counterpart are <strong>separate entries</strong> with different ids.
+  The <code>name</code> field at the top is optional but will be shown in the tool.
+</p>
+
+<h2>JSON data — copy or edit this</h2>
+<pre id="json-block">${jsonStr}</pre>
+
+<p style="margin-top:16px;">
+  <button onclick="downloadJson()" style="font-family:monospace; font-size:12px; padding:6px 16px; cursor:pointer;">
+    Download as .json
+  </button>
+</p>
+
+<script>
+function downloadJson() {
+  const blob = new Blob([document.getElementById("json-block").textContent], { type: "application/json" });
+  const a    = document.createElement("a");
+  a.download = "concertina-layout.json";
+  a.href     = URL.createObjectURL(blob);
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const link = document.createElement("a");
+  link.download = "concertina-layout-template.html";
   link.href     = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
