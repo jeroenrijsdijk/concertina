@@ -4,7 +4,7 @@
 
 Paste a tune in ABC notation, click Analyse, and the tool tells you which button to press for each note — and whether to push or pull the bellows.
 
-→ **[Try it online](https://jeroenrijsdijk.github.io/concertina/concertina.html)**
+→ **[Try it online](https://easyconcertina.com)**
 
 ---
 
@@ -67,7 +67,7 @@ Scoring favours:
 
 This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `concertina.html` (and `KEYS_DATA` constant in `concertina.rb`) can be adapted.
 
-A planned feature is a JSON upload so users can load their own button layout without editing the source.
+A **Download template** button exports the current layout as JSON. Edit it and upload it with **Upload layout** to use your own instrument. The active layout name is shown in the UI.
 
 ## ABC notation
 
@@ -98,11 +98,11 @@ See [`todo.md`](todo.md) for the current wish list.
 
 ## History
 
-Originally written in Ruby in 2015–2018. Refactored and ported to a web tool in 2026, with Claude AI.
+Originally written in Ruby in 2015–2018 under the name **MUPHIN**. Refactored and ported to a web tool in 2024.
 
 ## License
 
-MIT License — Copyright (c) 2015-2026 Jeroen Rijsdijk
+MIT License — Copyright (c) 2024 MUPHIN
 
 ## Support
 
