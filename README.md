@@ -4,7 +4,7 @@
 
 Paste a tune in ABC notation, click Analyse, and the tool tells you which button to press for each note — and whether to push or pull the bellows.
 
-→ **[Try it online]([(https://jeroenrijsdijk.github.io/concertina/concertina.html)]**
+→ **[Try it online](https://jeroenrijsdijk.github.io/concertina/concertina.html)**
 
 ---
 
