@@ -219,6 +219,25 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
     </div>
   </div>
 
+  <!-- Layout -->
+  <div class="row" style="margin-bottom:14px;">
+    <div class="panel" style="flex:1; min-width:300px;">
+      <div class="panel-title">Button Layout</div>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span style="font-size:12px; color:var(--muted);">Active layout:</span>
+        <span id="layout-name" style="font-weight:600; font-size:12px;">My Geuns</span>
+        <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="downloadLayout()" style="padding:5px 14px; font-size:12px;">Download template</button>
+          <label style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; background:var(--accent); color:#f0ebe3; padding:6px 14px; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#2a2018'" onmouseout="this.style.background='var(--accent)'">
+            Upload layout
+            <input type="file" id="layout-upload" accept=".json" onchange="uploadLayout(event)" style="display:none;">
+          </label>
+        </div>
+      </div>
+      <div id="layout-status" style="font-size:11px; color:var(--muted); margin-top:6px; min-height:16px;"></div>
+    </div>
+  </div>
+
   <!-- Results -->
   <div id="results" class="hidden">
 
@@ -255,9 +274,11 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
 
 <script>
 // =============================================================================
-//  Concertina key data
+//  Concertina button data  (default: My Geuns)
+//  Can be replaced at runtime by uploading a JSON layout file.
 // =============================================================================
-const KEYS_DATA = {
+const DEFAULT_LAYOUT_NAME = "My Geuns";
+let KEYS_DATA = {
    1:{side:1,row:1,button:5,pushpull:1,note:"E1"},
    2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
    3:{side:1,row:1,button:3,pushpull:1,note:"C#2"},
@@ -632,6 +653,73 @@ function renderTable(route, notes) {
       <td>${k.button}</td>`;
     tbody.appendChild(tr);
   });
+}
+
+// =============================================================================
+//  Layout management
+// =============================================================================
+function downloadLayout() {
+  const layout = { name: document.getElementById("layout-name").textContent, ...KEYS_DATA };
+  const blob   = new Blob([JSON.stringify(layout, null, 2)], { type: "application/json" });
+  const link   = document.createElement("a");
+  link.download = "concertina-layout.json";
+  link.href     = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function uploadLayout(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const name = data.name || file.name.replace(".json", "");
+
+      // Extract button entries (integer keys only)
+      const buttons = {};
+      for (const [k, v] of Object.entries(data)) {
+        const id = parseInt(k);
+        if (isNaN(id)) continue;
+
+        // Validate required fields
+        const required = ["side", "row", "button", "pushpull", "note"];
+        const missing  = required.filter(f => v[f] === undefined);
+        if (missing.length > 0) {
+          throw new Error(`Button ${id} is missing: ${missing.join(", ")}`);
+        }
+        buttons[id] = v;
+      }
+
+      if (Object.keys(buttons).length === 0) {
+        throw new Error("No valid buttons found in this file.");
+      }
+
+      // Apply new layout
+      KEYS_DATA  = buttons;
+      distmat    = null;  // force rebuild
+      noteKeys   = null;
+
+      document.getElementById("layout-name").textContent = name;
+      setLayoutStatus(`✓ Loaded "${name}" — ${Object.keys(buttons).length} buttons.`, "ok");
+
+      // Reset file input so same file can be re-uploaded
+      event.target.value = "";
+
+    } catch(err) {
+      setLayoutStatus("Error: " + err.message, "err");
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+function setLayoutStatus(msg, cls) {
+  const el = document.getElementById("layout-status");
+  el.textContent = msg;
+  el.style.color = cls === "ok" ? "var(--ok)" : "var(--pull)";
 }
 
 // =============================================================================
