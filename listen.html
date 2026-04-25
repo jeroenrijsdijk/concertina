@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concertina – Live Pitch</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0e0c0a;
+    --surface:  #1a1612;
+    --border:   #2e2820;
+    --text:     #e8e0d4;
+    --muted:    #6b6259;
+    --push:     #3a7bd5;
+    --pull:     #d94f3a;
+    --glow-p:   #5a9ff5;
+    --glow-r:   #ff6b52;
+    --accent:   #c8a96e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Code Pro', monospace;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ─────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  header a {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+  }
+  header a:hover { color: var(--text); border-color: var(--muted); }
+
+  /* ── Note display ────────────────────────────── */
+  #note-display {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+    min-width: 180px;
+  }
+
+  #note-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 64px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    line-height: 1;
+    color: var(--text);
+    text-shadow: 0 0 40px rgba(200,169,110,0.4);
+    transition: color 0.1s;
+    display: inline-block;
+  }
+
+  #note-freq {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 3px;
+  }
+
+  #note-buttons {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .note-btn-row {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 2px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .note-btn-push { color: var(--glow-p); }
+  .note-btn-pull { color: var(--glow-r); }
+
+  /* ── Volume bar ──────────────────────────────── */
+  #vol-wrap {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+  }
+
+  #vol-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  #vol-bar-wrap {
+    width: 10px;
+    height: 100px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #vol-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: var(--accent);
+    transition: height 0.05s;
+    border-radius: 3px;
+  }
+
+  #vol-threshold-line {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: var(--muted);
+    bottom: 30%;  /* visual indicator at threshold */
+  }
+
+  /* ── Canvas ──────────────────────────────────── */
+  #canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px 60px 10px 20px;
+  }
+
+  canvas { display: block; }
+
+  /* ── Controls ────────────────────────────────── */
+  #controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  #waveform-wrap {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+  }
+  #waveform-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  #waveform { display: block; flex: 1; }
+
+  #mic-btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #0e0c0a;
+    border: none;
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  #mic-btn:hover  { background: #e0bf7e; }
+  #mic-btn.active { background: var(--pull); color: #fff; }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  #status-msg {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Concertina · Live Pitch</h1>
+  <a href="concertina.html">← Fingering tool</a>
+  <span id="status-msg" style="margin-left:8px;">Click Start to open microphone</span>
+</header>
+
+<div id="note-display">
+  <div id="note-name">–</div>
+  <div id="note-freq"></div>
+  <div id="note-buttons"></div>
+</div>
+
+<div id="vol-wrap">
+  <div id="vol-label">Vol</div>
+  <div id="vol-bar-wrap">
+    <div id="vol-threshold-line"></div>
+    <div id="vol-bar" style="height:0%"></div>
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="tina-canvas"></canvas>
+</div>
+
+<div id="waveform-wrap">
+  <span id="waveform-label">Input</span>
+  <canvas id="waveform" height="36"></canvas>
+</div>
+
+<div id="controls">
+  <button id="mic-btn" onclick="toggleMic()">▶ Start</button>
+
+  <div class="ctrl-group">
+    <label for="thresh-slider">Threshold</label>
+    <input type="range" id="thresh-slider" min="1" max="80" value="18">
+    <span id="thresh-val">18</span>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--glow-p)"></span>Push</span>
+    <span><span class="dot" style="background:var(--glow-r)"></span>Pull</span>
+    <span><span class="dot" style="background:#333; border:1px solid #444"></span>Inactive</span>
+    <span style="color:var(--accent); font-size:10px;">★ btn 1 &amp; 2 brightest</span>
+  </div>
+</div>
+
+<script>
+// =============================================================================
+//  Button data  (same KEYS_DATA as concertina.html)
+// =============================================================================
+const KEYS_DATA = {
+   1:{side:1,row:1,button:5,pushpull:1,note:"E1"},
+   2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
+   3:{side:1,row:1,button:3,pushpull:1,note:"C#2"},
+   4:{side:1,row:1,button:2,pushpull:1,note:"A2"},
+   5:{side:1,row:1,button:1,pushpull:1,note:"G#2"},
+   6:{side:1,row:2,button:5,pushpull:1,note:"C1"},
+   7:{side:1,row:2,button:4,pushpull:1,note:"G1"},
+   8:{side:1,row:2,button:3,pushpull:1,note:"C2"},
+   9:{side:1,row:2,button:2,pushpull:1,note:"E2"},
+  10:{side:1,row:2,button:1,pushpull:1,note:"G2"},
+  11:{side:1,row:3,button:5,pushpull:1,note:"B1"},
+  12:{side:1,row:3,button:4,pushpull:1,note:"D2"},
+  13:{side:1,row:3,button:3,pushpull:1,note:"G2"},
+  14:{side:1,row:3,button:2,pushpull:1,note:"B2"},
+  15:{side:1,row:3,button:1,pushpull:1,note:"D3"},
+  16:{side:1,row:1,button:5,pushpull:2,note:"F1"},
+  17:{side:1,row:1,button:4,pushpull:2,note:"BB1"},
+  18:{side:1,row:1,button:3,pushpull:2,note:"D#2"},
+  19:{side:1,row:1,button:2,pushpull:2,note:"G2"},
+  20:{side:1,row:1,button:1,pushpull:2,note:"BB2"},
+  21:{side:1,row:2,button:5,pushpull:2,note:"G1"},
+  22:{side:1,row:2,button:4,pushpull:2,note:"B1"},
+  23:{side:1,row:2,button:3,pushpull:2,note:"D2"},
+  24:{side:1,row:2,button:2,pushpull:2,note:"F2"},
+  25:{side:1,row:2,button:1,pushpull:2,note:"A2"},
+  26:{side:1,row:3,button:5,pushpull:2,note:"A1"},
+  27:{side:1,row:3,button:4,pushpull:2,note:"F#2"},
+  28:{side:1,row:3,button:3,pushpull:2,note:"A2"},
+  29:{side:1,row:3,button:2,pushpull:2,note:"C3"},
+  30:{side:1,row:3,button:1,pushpull:2,note:"E3"},
+  31:{side:2,row:1,button:1,pushpull:1,note:"C#3"},
+  32:{side:2,row:1,button:2,pushpull:1,note:"C#3"},
+  33:{side:2,row:1,button:3,pushpull:1,note:"G#3"},
+  34:{side:2,row:1,button:4,pushpull:1,note:"C#4"},
+  35:{side:2,row:1,button:5,pushpull:1,note:"A4"},
+  36:{side:2,row:2,button:1,pushpull:1,note:"C3"},
+  37:{side:2,row:2,button:2,pushpull:1,note:"E3"},
+  38:{side:2,row:2,button:3,pushpull:1,note:"G3"},
+  39:{side:2,row:2,button:4,pushpull:1,note:"C4"},
+  40:{side:2,row:2,button:5,pushpull:1,note:"E4"},
+  41:{side:2,row:3,button:1,pushpull:1,note:"G3"},
+  42:{side:2,row:3,button:2,pushpull:1,note:"B3"},
+  43:{side:2,row:3,button:3,pushpull:1,note:"D4"},
+  44:{side:2,row:3,button:4,pushpull:1,note:"G4"},
+  45:{side:2,row:3,button:5,pushpull:1,note:"D#4"},
+  46:{side:2,row:1,button:1,pushpull:2,note:"C#3"},
+  47:{side:2,row:1,button:2,pushpull:2,note:"D#3"},
+  48:{side:2,row:1,button:3,pushpull:2,note:"G3"},
+  49:{side:2,row:1,button:4,pushpull:2,note:"BB3"},
+  50:{side:2,row:1,button:5,pushpull:2,note:"D4"},
+  51:{side:2,row:2,button:1,pushpull:2,note:"B2"},
+  52:{side:2,row:2,button:2,pushpull:2,note:"D3"},
+  53:{side:2,row:2,button:3,pushpull:2,note:"F3"},
+  54:{side:2,row:2,button:4,pushpull:2,note:"A3"},
+  55:{side:2,row:2,button:5,pushpull:2,note:"B3"},
+  56:{side:2,row:3,button:1,pushpull:2,note:"F#3"},
+  57:{side:2,row:3,button:2,pushpull:2,note:"A3"},
+  58:{side:2,row:3,button:3,pushpull:2,note:"C4"},
+  59:{side:2,row:3,button:4,pushpull:2,note:"E4"},
+  60:{side:2,row:3,button:5,pushpull:2,note:"F#4"}
+};
+
+// =============================================================================
+//  Note frequency table
+//  Irish/MUPHIN notation: octave labels are 2 below standard scientific pitch.
+//  C3 (Irish) = C5 (standard) = 523 Hz. Screen always shows Irish labels.
+//  The +2 in noteToHz converts to standard MIDI octaves for Hz calculation only.
+// =============================================================================
+const A4_HZ = 440;
+const NOTE_SEMITONES = {
+  "C":0,"C#":1,"D":2,"D#":3,"E":4,"F":5,"F#":6,"G":7,"G#":8,"A":9,"BB":10,"B":11
+};
+
+function noteToHz(noteName) {
+  const m = noteName.match(/^([A-G]#?|BB)(\d)$/);
+  if (!m) return null;
+  const semi = NOTE_SEMITONES[m[1]];
+  const oct  = parseInt(m[2]) + 2;   // MUPHIN → standard octave (+2)
+  const midi = (oct + 1) * 12 + semi;
+  return A4_HZ * Math.pow(2, (midi - 69) / 12);
+}
+
+// Build note → button ids map, and Hz lookup table
+const NOTE_BUTTONS = {};
+const BUTTON_HZ    = {};
+
+for (let id = 1; id <= 60; id++) {
+  const note = KEYS_DATA[id].note;
+  const hz   = noteToHz(note);
+  BUTTON_HZ[id] = hz;
+  if (!NOTE_BUTTONS[note]) NOTE_BUTTONS[note] = [];
+  if (!NOTE_BUTTONS[note].includes(id)) NOTE_BUTTONS[note].push(id);
+}
+
+// Sorted [hz, note] pairs — all entries are in the audible instrument range
+const HZ_TABLE = Object.entries(NOTE_BUTTONS)
+  .map(([note]) => ({ note, hz: noteToHz(note) }))
+  .filter(x => x.hz && x.hz > 80)
+  .sort((a, b) => a.hz - b.hz);
+
+// Instrument range derived from table
+const HZ_MIN = HZ_TABLE[0].hz * 0.92;
+const HZ_MAX = HZ_TABLE[HZ_TABLE.length - 1].hz * 1.08;
+
+function hzToNote(hz) {
+  if (!hz || hz < HZ_MIN || hz > HZ_MAX) return null;
+  let best = null, bestDist = Infinity;
+  for (const entry of HZ_TABLE) {
+    const cents = Math.abs(1200 * Math.log2(hz / entry.hz));
+    if (cents < bestDist) { bestDist = cents; best = entry; }
+  }
+  return bestDist < 60 ? best : null;   // 60 cents = just over a quarter tone
+}
+
+// =============================================================================
+//  Physical buttons  (30 entries: one per physical key position)
+//  Each has a push note and a pull note.
+// =============================================================================
+const PHYSICAL = [];   // { side, row, button, pushNote, pullNote }
+
+(function() {
+  const byPos = {};
+  for (let id = 1; id <= 60; id++) {
+    const k   = KEYS_DATA[id];
+    const key = `${k.side}-${k.row}-${k.button}`;
+    if (!byPos[key]) byPos[key] = { side: k.side, row: k.row, button: k.button };
+    if (k.pushpull === 1) byPos[key].pushNote = k.note;
+    else                  byPos[key].pullNote = k.note;
+  }
+  // Sort: side asc, row asc, button asc
+  Object.values(byPos)
+    .sort((a,b) => a.side - b.side || a.row - b.row || a.button - b.button)
+    .forEach(p => PHYSICAL.push(p));
+})();
+
+// =============================================================================
+//  Canvas layout  (one dot per physical button)
+// =============================================================================
+const canvas = document.getElementById("tina-canvas");
+const ctx    = canvas.getContext("2d");
+
+let BTN_POS = {};   // index into PHYSICAL → {x, y, r}
+
+function layoutButtons() {
+  const wrap = document.getElementById("canvas-wrap");
+  const W    = wrap.clientWidth;
+  const H    = wrap.clientHeight;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const COLS   = 5;
+  const ROWS   = 3;
+  const HAND_W = W * 0.44;
+  const HAND_H = H * 0.88;
+  const LEFT_X = W * 0.01;
+  const RIGHT_X= W * 0.55;
+  const TOP_Y  = H * 0.06;
+  const SLOT_W = HAND_W / COLS;
+  const SLOT_H = HAND_H / ROWS;
+  const R      = Math.min(SLOT_W, SLOT_H) * 0.32;
+
+  BTN_POS = {};
+
+  PHYSICAL.forEach((p, i) => {
+    const col    = p.button - 1;   // 0..4
+    const row    = p.row - 1;      // 0..2
+    // Left hand: button 5 at far left, 1 at far right
+    // Right hand: button 1 at far left, 5 at far right
+    const colIdx = (p.side === 1) ? (COLS - 1 - col) : col;
+    const handX  = p.side === 1 ? LEFT_X : RIGHT_X;
+
+    BTN_POS[i] = {
+      x: handX + colIdx * SLOT_W + SLOT_W / 2,
+      y: TOP_Y  + row   * SLOT_H + SLOT_H / 2,
+      r: R
+    };
+  });
+}
+
+// =============================================================================
+//  Drawing
+// =============================================================================
+let activeNote = null;   // current note name string or null
+let brightness = {};     // physical index → 0..1
+let litColor   = {};     // physical index → "push" | "pull" | null
+
+function drawFrame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Hand labels
+  ctx.font      = "600 11px 'Oswald', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#3a3028";
+  const leftMid  = canvas.width * 0.01 + canvas.width * 0.44 / 2;
+  const rightMid = canvas.width * 0.55 + canvas.width * 0.44 / 2;
+  ctx.fillText("LEFT HAND",  leftMid,  canvas.height * 0.02 + 10);
+  ctx.fillText("RIGHT HAND", rightMid, canvas.height * 0.02 + 10);
+
+  // Row labels (t / c / g)
+  const HAND_H = canvas.height * 0.88;
+  const TOP_Y  = canvas.height * 0.06;
+  const SLOT_H = HAND_H / 3;
+  ctx.font      = "300 22px 'Oswald', sans-serif";
+  ctx.fillStyle = "#2a2218";
+  ["t","c","g"].forEach((name, i) => {
+    ctx.fillText(name, canvas.width * 0.495, TOP_Y + i * SLOT_H + SLOT_H / 2 + 8);
+  });
+
+  // Draw all 30 physical buttons
+  PHYSICAL.forEach((p, i) => {
+    const pos  = BTN_POS[i];
+    const br   = brightness[i] || 0;
+    const isPull = litColor[i] === "pull";
+
+    // Glow
+    if (br > 0.05) {
+      const glow = ctx.createRadialGradient(pos.x, pos.y, pos.r * 0.5, pos.x, pos.y, pos.r * 3.5);
+      glow.addColorStop(0, isPull ? `rgba(217,79,58,${br*0.4})` : `rgba(58,123,213,${br*0.4})`);
+      glow.addColorStop(1, "transparent");
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, pos.r * 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+    }
+
+    // Circle fill
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, pos.r, 0, Math.PI * 2);
+    ctx.fillStyle = br > 0.05
+      ? (isPull
+          ? `rgba(${lerp(60,255,br)},${lerp(20,80,br)},${lerp(20,40,br)},1)`
+          : `rgba(${lerp(20,40,br)},${lerp(50,100,br)},${lerp(60,220,br)},1)`)
+      : "#161210";
+    ctx.fill();
+
+    // Stroke
+    ctx.strokeStyle = br > 0.05
+      ? (isPull ? `rgba(255,107,82,${0.4+br*0.6})` : `rgba(90,159,245,${0.4+br*0.6})`)
+      : "#2a2218";
+    ctx.lineWidth = br > 0.3 ? 1.5 : 0.8;
+    ctx.stroke();
+
+    // Note labels inside the dot
+    const lit    = br > 0.05;
+    const fsLarge = Math.round(pos.r * 0.52);
+    const fsSmall = Math.round(pos.r * 0.30);
+
+    ctx.textAlign = "center";
+
+    if (lit) {
+      // Active note: large, centered, bright
+      const activeNote = isPull ? p.pullNote : p.pushNote;
+      const inactNote  = isPull ? p.pushNote : p.pullNote;
+
+      ctx.font      = `600 ${fsLarge}px 'Source Code Pro', monospace`;
+      ctx.fillStyle = isPull ? "#ffb8a8" : "#a8c8ff";
+      ctx.fillText(activeNote || "–", pos.x, pos.y + pos.r * 0.18);
+
+      // Inactive note: tiny, top corner, barely visible
+      if (inactNote) {
+        ctx.font      = `400 ${fsSmall}px 'Source Code Pro', monospace`;
+        ctx.fillStyle = "rgba(80,70,60,0.4)";
+        ctx.fillText(inactNote, pos.x, pos.y - pos.r * 0.52);
+      }
+    } else {
+      // Not lit: both notes small as reference
+      ctx.font      = `400 ${fsSmall}px 'Source Code Pro', monospace`;
+      ctx.fillStyle = "#2a2218";
+      ctx.fillText(p.pushNote || "–", pos.x, pos.y - pos.r * 0.1);
+      ctx.fillStyle = "#221810";
+      ctx.fillText(p.pullNote || "–", pos.x, pos.y + pos.r * 0.55);
+    }
+
+    // Button number (tiny, bottom edge)
+    ctx.font      = `8px 'Source Code Pro', monospace`;
+    ctx.fillStyle = lit ? "rgba(180,160,120,0.4)" : "#1e1810";
+    ctx.fillText("btn" + p.button, pos.x, pos.y + pos.r * 0.9);
+  });
+}
+
+function lerp(a, b, t) { return Math.round(a + (b-a) * Math.max(0, Math.min(1, t))); }
+
+// =============================================================================
+//  Centre display update
+// =============================================================================
+const ROW_NAMES = ["_", "t", "c", "g"];
+
+function updateNoteDisplay(noteName, hz) {
+  const btnDiv = document.getElementById("note-buttons");
+  btnDiv.innerHTML = "";
+  if (!noteName) return;
+
+  // Find all physical buttons that produce this note
+  const matches = [];
+  for (let id = 1; id <= 60; id++) {
+    if (KEYS_DATA[id].note === noteName) matches.push(KEYS_DATA[id]);
+  }
+
+  matches.forEach(k => {
+    const row   = ROW_NAMES[k.row];
+    const side  = k.side === 1 ? "left" : "right";
+    const pp    = k.pushpull === 1 ? "push" : "pull";
+    const cls   = k.pushpull === 1 ? "note-btn-push" : "note-btn-pull";
+    const div   = document.createElement("div");
+    div.className = `note-btn-row ${cls}`;
+    div.textContent = `${side}  ·  row ${row}  ·  btn ${k.button}  ·  ${pp}`;
+    btnDiv.appendChild(div);
+  });
+}
+
+// =============================================================================
+//  Waveform display
+// =============================================================================
+const wfCanvas = document.getElementById("waveform");
+const wfCtx    = wfCanvas.getContext("2d");
+
+function drawWaveform() {
+  const W = wfCanvas.width;
+  const H = wfCanvas.height;
+
+  wfCtx.fillStyle = "#0e0c0a";
+  wfCtx.fillRect(0, 0, W, H);
+
+  // Threshold line
+  const threshold = parseInt(document.getElementById("thresh-slider").value) / 1000;
+  const threshY   = H / 2 - (threshold / 0.1) * (H / 2) * 0.8;
+  wfCtx.strokeStyle = "#2e2820";
+  wfCtx.lineWidth   = 1;
+  wfCtx.setLineDash([4, 4]);
+  wfCtx.beginPath();
+  wfCtx.moveTo(0, threshY); wfCtx.lineTo(W, threshY);
+  wfCtx.moveTo(0, H - threshY + H/2 - H/2); // mirror
+  wfCtx.stroke();
+  wfCtx.setLineDash([]);
+
+  if (!isRunning) {
+    wfCtx.fillStyle = "#2a2218";
+    wfCtx.font      = "10px 'Source Code Pro', monospace";
+    wfCtx.textAlign = "center";
+    wfCtx.fillText("microphone off", W / 2, H / 2 + 4);
+    return;
+  }
+
+  // Draw waveform from timeBuf
+  const step  = Math.ceil(timeBuf.length / W);
+  const mid   = H / 2;
+  const scale = mid * 0.9;
+
+  // Colour: accent if above threshold, muted if below
+  let rms = 0;
+  for (let i = 0; i < timeBuf.length; i++) rms += timeBuf[i] * timeBuf[i];
+  rms = Math.sqrt(rms / timeBuf.length);
+  const aboveThresh = rms >= threshold;
+
+  wfCtx.beginPath();
+  wfCtx.strokeStyle = aboveThresh ? "var(--accent)" : "#2e2820";
+  wfCtx.lineWidth   = 1;
+
+  for (let x = 0; x < W; x++) {
+    let sum = 0;
+    for (let j = 0; j < step; j++) sum += timeBuf[x * step + j] || 0;
+    const y = mid - (sum / step) * scale;
+    x === 0 ? wfCtx.moveTo(x, y) : wfCtx.lineTo(x, y);
+  }
+  wfCtx.stroke();
+
+  // RMS level label
+  const db = rms > 0 ? Math.round(20 * Math.log10(rms)) : -99;
+  wfCtx.fillStyle = aboveThresh ? "var(--accent)" : "#3a3028";
+  wfCtx.font      = "9px 'Source Code Pro', monospace";
+  wfCtx.textAlign = "right";
+  wfCtx.fillText(db + " dB", W - 4, H - 4);
+}
+
+function resizeWaveform() {
+  const wrap    = document.getElementById("waveform-wrap");
+  wfCanvas.width = wrap.clientWidth - 60;
+}
+
+// =============================================================================
+//  Brightness decay animation
+// =============================================================================
+const DECAY = 0.08;
+
+function animationLoop() {
+  PHYSICAL.forEach((p, i) => {
+    const preferFull = p.button <= 2;
+    let target = 0;
+    let color  = null;
+
+    if (activeNote) {
+      if (p.pushNote === activeNote) { target = preferFull ? 1.0 : 0.6; color = "push"; }
+      if (p.pullNote === activeNote) { target = preferFull ? 1.0 : 0.6; color = "pull"; }
+    }
+
+    if (!brightness[i]) brightness[i] = 0;
+    if (target > brightness[i]) {
+      brightness[i] = target;
+      litColor[i]   = color;
+    } else {
+      brightness[i] = Math.max(0, brightness[i] - DECAY);
+      if (brightness[i] === 0) litColor[i] = null;
+    }
+  });
+
+  drawFrame();
+  drawWaveform();
+  requestAnimationFrame(animationLoop);
+}
+
+// =============================================================================
+//  Pitch detection  (HPS — Harmonic Product Spectrum)
+// =============================================================================
+let audioCtx = null, analyser = null, micStream = null;
+let isRunning = false;
+
+const BUFFER_SIZE = 8192;
+const timeBuf     = new Float32Array(BUFFER_SIZE);
+// NOTE: actual sample rate is read from audioCtx.sampleRate at runtime,
+// not hardcoded — browsers commonly use 44100 or 48000 Hz.
+
+// Filter state
+const REQUIRED_HITS = 3;
+const HOLD_FRAMES   = 8;
+let candidate      = null;
+let candidateCount = 0;
+let holdNote       = null;
+let holdCountdown  = 0;
+
+function detectPitch() {
+  if (!isRunning) return;
+  analyser.getFloatTimeDomainData(timeBuf);
+
+  // RMS volume
+  let sum = 0;
+  for (let i = 0; i < BUFFER_SIZE; i++) sum += timeBuf[i] * timeBuf[i];
+  const rms       = Math.sqrt(sum / BUFFER_SIZE);
+  const threshold = parseInt(document.getElementById("thresh-slider").value) / 1000;
+
+  document.getElementById("vol-bar").style.height = Math.min(100, rms / 0.1 * 100) + "%";
+
+  if (rms < threshold) {
+    candidate      = null;
+    candidateCount = 0;
+    if (holdCountdown > 0) {
+      holdCountdown--;
+    } else {
+      holdNote   = null;
+      activeNote = null;
+      document.getElementById("note-name").textContent = "–";
+      document.getElementById("note-name").style.color = "var(--text)";
+      document.getElementById("note-freq").textContent = "";
+      updateNoteDisplay(null);
+    }
+    setTimeout(detectPitch, 30);
+    return;
+  }
+
+  const result = detectFFTPeak();
+
+  if (result && result.clarity > 8) {   // 8 dB above mean = clear tone
+    const match = hzToNote(result.hz);
+
+    if (match) {
+      if (match.note === candidate) {
+        candidateCount++;
+      } else {
+        candidate      = match.note;
+        candidateCount = 1;
+      }
+
+      if (candidateCount >= REQUIRED_HITS) {
+        holdNote      = match.note;
+        holdCountdown = HOLD_FRAMES;
+        activeNote    = match.note;
+        document.getElementById("note-name").textContent = match.note;
+        document.getElementById("note-name").style.color = "var(--accent)";
+        document.getElementById("note-freq").textContent = result.hz.toFixed(1) + " Hz";
+        updateNoteDisplay(match.note, result.hz);
+      }
+    } else {
+      candidate      = null;
+      candidateCount = 0;
+      if (!holdNote) {
+        document.getElementById("note-freq").textContent = result.hz.toFixed(1) + " Hz (out of range)";
+      }
+    }
+  }
+
+  setTimeout(detectPitch, 35);
+}
+
+// Concertina reeds produce a strong fundamental — direct FFT peak is more
+// reliable than HPS, especially in the high register where harmonics are weak.
+function detectFFTPeak() {
+  const freqBuf = new Float32Array(analyser.frequencyBinCount);
+  analyser.getFloatFrequencyData(freqBuf);   // dB values
+
+  const N     = freqBuf.length;
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+
+  // Search only within the instrument's actual frequency range
+  const minBin = Math.max(1,   Math.floor(HZ_MIN / binHz));
+  const maxBin = Math.min(N-2, Math.ceil( HZ_MAX / binHz));
+
+  // Find the strongest peak in range
+  let bestBin = minBin, bestVal = -Infinity;
+  for (let i = minBin; i <= maxBin; i++) {
+    if (freqBuf[i] > bestVal) { bestVal = freqBuf[i]; bestBin = i; }
+  }
+
+  // Parabolic interpolation for sub-bin accuracy
+  const y1 = freqBuf[bestBin - 1], y2 = freqBuf[bestBin], y3 = freqBuf[bestBin + 1];
+  const denom = 2 * y2 - y1 - y3;
+  const hz = denom > 0
+    ? (bestBin + (y1 - y3) / (2 * denom)) * binHz
+    : bestBin * binHz;
+
+  // Clarity: peak prominence above local mean (dB)
+  // A clean tone: 15+ dB above mean. Noise: near 0.
+  let mean = 0;
+  for (let i = minBin; i <= maxBin; i++) mean += freqBuf[i];
+  mean /= (maxBin - minBin + 1);
+  const clarity = bestVal - mean;
+
+  return { hz, clarity };
+}
+
+// =============================================================================
+//  Mic on/off
+// =============================================================================
+async function toggleMic() {
+  const btn = document.getElementById("mic-btn");
+  const msg = document.getElementById("status-msg");
+
+  if (isRunning) {
+    // Stop
+    isRunning = false;
+    if (micStream) micStream.getTracks().forEach(t => t.stop());
+    if (audioCtx)  audioCtx.close();
+    audioCtx = analyser = micStream = null;
+    btn.textContent = "▶ Start";
+    btn.classList.remove("active");
+    activeNote = null;
+    msg.textContent = "Microphone stopped.";
+    document.getElementById("note-name").textContent = "–";
+    document.getElementById("note-name").style.color = "var(--text)";
+    document.getElementById("note-freq").textContent = "";
+    document.getElementById("vol-bar").style.height = "0%";
+    return;
+  }
+
+  // Start
+  try {
+    msg.textContent = "Requesting microphone access…";
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    analyser  = audioCtx.createAnalyser();
+    analyser.fftSize = BUFFER_SIZE * 2;   // 16384 → bin width ~2.7 Hz
+
+    audioCtx.createMediaStreamSource(micStream).connect(analyser);
+
+    isRunning = true;
+    btn.textContent = "■ Stop";
+    btn.classList.add("active");
+    msg.textContent = `Listening… (${audioCtx.sampleRate} Hz)`;
+
+    detectPitch();
+  } catch(e) {
+    msg.textContent = "Microphone access denied. " + e.message;
+  }
+}
+
+// =============================================================================
+//  Threshold slider
+// =============================================================================
+document.getElementById("thresh-slider").addEventListener("input", function() {
+  document.getElementById("thresh-val").textContent = this.value;
+  // Update threshold line position: slider 1–80 maps to bar height 1–80%
+  const pct = parseInt(this.value) / 80 * 100;
+  document.getElementById("vol-threshold-line").style.bottom = pct + "%";
+});
+
+// Init threshold line position
+(function() {
+  const s = document.getElementById("thresh-slider");
+  document.getElementById("vol-threshold-line").style.bottom = (parseInt(s.value) / 80 * 100) + "%";
+})();
+
+// =============================================================================
+//  Boot
+// =============================================================================
+window.addEventListener("resize", () => { layoutButtons(); drawFrame(); resizeWaveform(); });
+layoutButtons();
+resizeWaveform();
+animationLoop();
+</script>
+</body>
+</html>
