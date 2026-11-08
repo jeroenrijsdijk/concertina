@@ -416,107 +416,17 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
   </div>
 </div>
 
+<script src="keys.js"></script>
 <script>
-// =============================================================================
-//  Concertina button data  (default: My Geuns)
-//  Can be replaced at runtime by uploading a JSON layout file.
-// =============================================================================
-const DEFAULT_LAYOUT_NAME = "My Geuns";
-let KEYS_DATA = {
-   1:{side:1,row:1,button:5,pushpull:1,note:"E1"},
-   2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
-   3:{side:1,row:1,button:3,pushpull:1,note:"C#2"},
-   4:{side:1,row:1,button:2,pushpull:1,note:"A2"},
-   5:{side:1,row:1,button:1,pushpull:1,note:"G#2"},
-   6:{side:1,row:2,button:5,pushpull:1,note:"C1"},
-   7:{side:1,row:2,button:4,pushpull:1,note:"G1"},
-   8:{side:1,row:2,button:3,pushpull:1,note:"C2"},
-   9:{side:1,row:2,button:2,pushpull:1,note:"E2"},
-  10:{side:1,row:2,button:1,pushpull:1,note:"G2"},
-  11:{side:1,row:3,button:5,pushpull:1,note:"B1"},
-  12:{side:1,row:3,button:4,pushpull:1,note:"D2"},
-  13:{side:1,row:3,button:3,pushpull:1,note:"G2"},
-  14:{side:1,row:3,button:2,pushpull:1,note:"B2"},
-  15:{side:1,row:3,button:1,pushpull:1,note:"D3"},
-  16:{side:1,row:1,button:5,pushpull:2,note:"F1"},
-  17:{side:1,row:1,button:4,pushpull:2,note:"BB1"},
-  18:{side:1,row:1,button:3,pushpull:2,note:"D#2"},
-  19:{side:1,row:1,button:2,pushpull:2,note:"G2"},
-  20:{side:1,row:1,button:1,pushpull:2,note:"BB2"},
-  21:{side:1,row:2,button:5,pushpull:2,note:"G1"},
-  22:{side:1,row:2,button:4,pushpull:2,note:"B1"},
-  23:{side:1,row:2,button:3,pushpull:2,note:"D2"},
-  24:{side:1,row:2,button:2,pushpull:2,note:"F2"},
-  25:{side:1,row:2,button:1,pushpull:2,note:"A2"},
-  26:{side:1,row:3,button:5,pushpull:2,note:"A1"},
-  27:{side:1,row:3,button:4,pushpull:2,note:"F#2"},
-  28:{side:1,row:3,button:3,pushpull:2,note:"A2"},
-  29:{side:1,row:3,button:2,pushpull:2,note:"C3"},
-  30:{side:1,row:3,button:1,pushpull:2,note:"E3"},
-  31:{side:2,row:1,button:1,pushpull:1,note:"C#3"},
-  32:{side:2,row:1,button:2,pushpull:1,note:"C#3"},
-  33:{side:2,row:1,button:3,pushpull:1,note:"G#3"},
-  34:{side:2,row:1,button:4,pushpull:1,note:"C#4"},
-  35:{side:2,row:1,button:5,pushpull:1,note:"A4"},
-  36:{side:2,row:2,button:1,pushpull:1,note:"C3"},
-  37:{side:2,row:2,button:2,pushpull:1,note:"E3"},
-  38:{side:2,row:2,button:3,pushpull:1,note:"G3"},
-  39:{side:2,row:2,button:4,pushpull:1,note:"C4"},
-  40:{side:2,row:2,button:5,pushpull:1,note:"E4"},
-  41:{side:2,row:3,button:1,pushpull:1,note:"G3"},
-  42:{side:2,row:3,button:2,pushpull:1,note:"B3"},
-  43:{side:2,row:3,button:3,pushpull:1,note:"D4"},
-  44:{side:2,row:3,button:4,pushpull:1,note:"G4"},
-  45:{side:2,row:3,button:5,pushpull:1,note:"D#4"},
-  46:{side:2,row:1,button:1,pushpull:2,note:"C#3"},
-  47:{side:2,row:1,button:2,pushpull:2,note:"D#3"},
-  48:{side:2,row:1,button:3,pushpull:2,note:"G3"},
-  49:{side:2,row:1,button:4,pushpull:2,note:"BB3"},
-  50:{side:2,row:1,button:5,pushpull:2,note:"D4"},
-  51:{side:2,row:2,button:1,pushpull:2,note:"B2"},
-  52:{side:2,row:2,button:2,pushpull:2,note:"D3"},
-  53:{side:2,row:2,button:3,pushpull:2,note:"F3"},
-  54:{side:2,row:2,button:4,pushpull:2,note:"A3"},
-  55:{side:2,row:2,button:5,pushpull:2,note:"B3"},
-  56:{side:2,row:3,button:1,pushpull:2,note:"F#3"},
-  57:{side:2,row:3,button:2,pushpull:2,note:"A3"},
-  58:{side:2,row:3,button:3,pushpull:2,note:"C4"},
-  59:{side:2,row:3,button:4,pushpull:2,note:"E4"},
-  60:{side:2,row:3,button:5,pushpull:2,note:"F#4"}
-};
-
-// =============================================================================
-//  Notes
-//  Labels use Irish session notation: two octaves below standard scientific
-//  pitch (Irish C3 = standard C5 = MIDI 72). Sharp = "#", flat = capital "B"
-//  after the letter ("BB1" = B flat, "EB2" = E flat). Notes are compared as
-//  MIDI numbers, so enharmonic spellings (A# / BB) are the same note.
-// =============================================================================
-const SEMITONE    = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-const PITCH_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-
-function noteToMidi(label) {
-  const m = /^([A-G])(#|B)?(-?\d+)$/.exec(label || "");
-  if (!m) return null;
-  const accidental = m[2] === "#" ? 1 : m[2] === "B" ? -1 : 0;
-  return (parseInt(m[3], 10) + 2 + 1) * 12 + SEMITONE[m[1]] + accidental;
-}
-
-function midiToName(midi) {
-  return PITCH_NAMES[midi % 12] + (Math.floor(midi / 12) - 1 - 2);
-}
-
-function midiToHz(midi) {
-  return 440 * Math.pow(2, (midi - 69) / 12);
+// keys.js must sit next to this file (it holds KEYS_DATA and the note helpers)
+if (typeof KEYS_DATA === "undefined") {
+  document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js was not found. Put <b>keys.js</b> in the same folder as this page.</p>';
+  throw new Error("keys.js missing");
 }
 
 // =============================================================================
-//  Layout lookups  (built from KEYS_DATA; any number of buttons)
+//  Note -> button lookup  (built from KEYS_DATA; any number of buttons)
 // =============================================================================
-function buttonIds() {
-  return Object.keys(KEYS_DATA).map(Number).sort((a, b) => a - b);
-}
-
 // MIDI note -> list of button ids that play it
 function buildNoteKeys() {
   const map = {};
@@ -1116,59 +1026,79 @@ function saveImage() {
 //  Notation (abcjs basic) + Web Audio player
 // =============================================================================
 
-let audioCtx   = null;
-let playerNotes = [];   // array of Hz values from last route
-let playerTimer = null;
-let playerIdx   = 0;
+// Every note is scheduled up front on the audio clock, so timing does not depend on
+// timers or on how busy the page is. The tempo is read when Play is pressed.
+const NOTE_PEAK   = 0.35;   // loudness of one note
+const NOTE_ATTACK = 0.01;   // seconds of fade-in; avoids a click at the start of each note
+const NOTE_LENGTH = 0.85;   // fraction of a beat the note sounds (the rest is a short gap)
+const LEAD_IN     = 0.10;   // seconds between pressing Play and the first note
+
+let audioCtx    = null;
+let playerNotes = [];       // Hz per note of the winning route
+let player      = null;     // while playing: { master, oscs, t0, step, raf, endTimer }
+
+function playNote(dest, hz, when, beat) {
+  const osc  = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = hz;
+  osc.connect(gain);
+  gain.connect(dest);
+
+  const end = when + beat * NOTE_LENGTH;
+  gain.gain.setValueAtTime(0, when);
+  gain.gain.linearRampToValueAtTime(NOTE_PEAK, when + NOTE_ATTACK);
+  gain.gain.exponentialRampToValueAtTime(0.001, end);
+  gain.gain.linearRampToValueAtTime(0, end + 0.02);   // an exponential ramp never reaches 0
+  osc.start(when);
+  osc.stop(end + 0.03);
+  return osc;
+}
 
 function stopPlayer() {
-  if (playerTimer !== null) { clearTimeout(playerTimer); playerTimer = null; }
+  if (player) {
+    const t = audioCtx.currentTime;
+    clearTimeout(player.endTimer);
+    cancelAnimationFrame(player.raf);
+    player.master.gain.cancelScheduledValues(t);
+    player.master.gain.setValueAtTime(player.master.gain.value, t);
+    player.master.gain.linearRampToValueAtTime(0, t + 0.03);    // short fade-out: no click
+    player.oscs.forEach(o => { try { o.stop(t + 0.04); } catch (e) { /* already stopped */ } });
+    player = null;
+  }
   document.getElementById("play-btn").textContent = "▶ Play";
   document.getElementById("player-status").textContent = "";
 }
 
-function scheduleNote(idx, noteDurationMs) {
-  if (idx >= playerNotes.length) {
-    stopPlayer();
-    return;
-  }
-  playerIdx = idx;
-  const total  = playerNotes.length;
-  document.getElementById("player-status").textContent =
-    `♩ ${idx + 1} / ${total}`;
-
-  const hz = playerNotes[idx];
-  if (hz && audioCtx) {
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type      = "triangle";
-    osc.frequency.value = hz;
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    const now = audioCtx.currentTime;
-    const dur = noteDurationMs / 1000;
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.85);
-    osc.start(now);
-    osc.stop(now + dur * 0.85);
-  }
-
-  playerTimer = setTimeout(() => scheduleNote(idx + 1, noteDurationMs), noteDurationMs);
+function updatePlayerStatus() {
+  if (!player) return;
+  const i = Math.floor((audioCtx.currentTime - player.t0) / player.step);
+  const shown = Math.min(Math.max(i, 0), playerNotes.length - 1) + 1;
+  document.getElementById("player-status").textContent = `♩ ${shown} / ${playerNotes.length}`;
+  player.raf = requestAnimationFrame(updatePlayerStatus);
 }
 
 function togglePlay() {
-  if (playerTimer !== null) { stopPlayer(); return; }
-  if (!playerNotes.length)  { return; }
+  if (player) { stopPlayer(); return; }
+  if (!playerNotes.length) return;
 
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
 
   const bpm  = parseInt(document.getElementById("tempo-slider").value) || 120;
-  const msPerNote = Math.round(60000 / bpm);
+  const step = 60 / bpm;
+  const t0   = audioCtx.currentTime + LEAD_IN;
+
+  const master = audioCtx.createGain();
+  master.connect(audioCtx.destination);
+  const oscs = playerNotes.map((hz, i) => playNote(master, hz, t0 + i * step, step));
+
+  // Timer only resets the button when the tune is over (works in a background tab too)
+  const endTimer = setTimeout(stopPlayer, (LEAD_IN + playerNotes.length * step) * 1000 + 150);
+  player = { master, oscs, t0, step, raf: 0, endTimer };
 
   document.getElementById("play-btn").textContent = "■ Stop";
-  scheduleNote(0, msPerNote);
+  updatePlayerStatus();
 }
 
 function renderNotation(abcText, route) {
