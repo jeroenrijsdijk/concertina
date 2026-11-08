@@ -10,7 +10,8 @@
 <meta property="og:title" content="Concertina Fingering Tool – Best Buttons for Anglo C/G">
 <meta property="og:description" content="Free online tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. Includes sheet music and playback.">
 <meta property="og:url" content="https://jeroenrijsdijk.nl/concertina/concertina.html">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="vendor/abcjs-basic-min.js"></script>
 <style>
   :root {
@@ -285,6 +286,14 @@
     padding: 16px;
   }
   #fs-canvas { display: block; background: #fff; }
+
+  /* Phones: panels take the full width, wide content scrolls inside its panel */
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; padding: 10px 12px; row-gap: 6px; }
+    main { padding: 12px; }
+    .row > .panel { min-width: 0 !important; flex-basis: 100% !important; }
+    .panel { overflow-x: auto; }
+  }
 </style>
 </head>
 <body>
@@ -774,9 +783,10 @@ function renderTable(route, labels) {
 //  Layout management
 // =============================================================================
 function downloadLayout() {
-  const layoutName = document.getElementById("layout-name").textContent;
-  const jsonData   = { name: layoutName, ...KEYS_DATA };
-  const jsonStr    = JSON.stringify(jsonData, null, 2);
+  const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const rawName    = document.getElementById("layout-name").textContent;
+  const layoutName = esc(rawName);
+  const jsonStr    = esc(JSON.stringify({ name: rawName, ...KEYS_DATA }, null, 2));
 
   // Build a canvas diagram of all 60 buttons with IDs labeled
   const cvs    = document.createElement("canvas");
@@ -981,6 +991,8 @@ function validateButton(v) {
   return null;
 }
 
+const MAX_BUTTON_ID = 200;   // ids index the distance matrix, so keep them small
+
 function uploadLayout(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -989,17 +1001,19 @@ function uploadLayout(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      const name = data.name || file.name.replace(".json", "");
+      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("This is not a layout file.");
+      const name = String(data.name || file.name.replace(/\.json$/i, "")).slice(0, 80);
 
       // Extract button entries (integer keys only)
       const buttons = {};
       for (const [k, v] of Object.entries(data)) {
-        const id = parseInt(k);
-        if (isNaN(id)) continue;
+        if (!/^\d+$/.test(k)) continue;              // "name" and other non-button fields
+        const id = Number(k);
+        if (id < 1 || id > MAX_BUTTON_ID) throw new Error(`Button id ${k}: must be 1 to ${MAX_BUTTON_ID}`);
 
         const problem = validateButton(v);
         if (problem) throw new Error(`Button ${id}: ${problem}`);
-        buttons[id] = v;
+        buttons[id] = { side: v.side, row: v.row, button: v.button, pushpull: v.pushpull, note: v.note };
       }
 
       if (Object.keys(buttons).length === 0) {
