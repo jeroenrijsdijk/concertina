@@ -49,13 +49,15 @@ Output: a printed fingering table in the terminal and one or more A4 PNG files n
 
 ## How the algorithm works
 
-The search is a **beam search**:
+The search is **exact** (dynamic programming / Viterbi):
 
 1. For each note in the tune, all buttons that produce that note are looked up
-2. All combinations are built step by step
-3. Each transition between two buttons is scored (same hand, push-pull balance, preferred rows, finger hops)
-4. When routes exceed 4,096, the worst-scoring ones are pruned
-5. The route with the lowest total score is returned
+2. Each transition between two buttons is scored (same hand, push-pull balance, preferred rows, finger hops)
+3. Because a route's score is the sum of its consecutive transitions, the cheapest route through all notes can be found without pruning — in linear time, so even long tunes are instant
+4. The route with the lowest total score is returned
+5. A second, "soft" pass (forward-backward with a temperature) gives the probability of each alternative button per note, shown as the smaller dots in the diagram
+
+(Note: the Ruby script `concertina.rb` still uses the original beam search.)
 
 Scoring favours:
 - Staying on the same hand
@@ -83,14 +85,14 @@ K:Gmaj
 |:GAG GAB|ABA ABd|egd edB|dBA ABd:|
 ```
 
-Key signatures are handled automatically. Explicit accidentals (`^c`, `_B`) are not yet supported.
+The ABC is read with [abcjs](https://abcjs.net), the same library that draws the sheet music: key signatures and modes, explicit accidentals (`^c`, `_B`, `=f`), octave marks and ties are handled; chord symbols, decorations and comments are ignored. Repeats are not unrolled, grace notes are not fingered, and for chords only the top note is used. Anything left out is reported under the Analyse button.
 
 ## Known limitations
 
 - 30-button C/G Anglo only (adaptable via `KEYS_DATA`)
-- Notes outside the instrument's range are silently skipped
-- Explicit accidentals in the note line are not yet parsed
-- Chords are not supported
+- Notes outside the instrument's range cannot be fingered; they are skipped and listed
+- Chords are not supported (only the top note is used)
+- Playback uses equal note lengths; durations from the ABC are not used yet
 
 ## Roadmap
 

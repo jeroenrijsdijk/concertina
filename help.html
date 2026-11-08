@@ -484,8 +484,8 @@ K:Gmaj
   <div class="dot-row">
     <div class="dot-item"><div class="dot dot-push"></div> <span><strong>Large blue dot</strong> — the recommended button, pressed on the push stroke.</span></div>
     <div class="dot-item"><div class="dot dot-pull"></div> <span><strong>Large red dot</strong> — the recommended button, pressed on the pull stroke.</span></div>
-    <div class="dot-item"><div class="dot dot-small"></div> <span><strong>Smaller blue/red dot</strong> — an alternative button that also appears in the best routes. Larger = used more often.</span></div>
-    <div class="dot-item"><div class="dot dot-gray"></div> <span><strong>Small grey dot</strong> — button not used for this note in any of the best routes.</span></div>
+    <div class="dot-item"><div class="dot dot-small"></div> <span><strong>Smaller blue/red dot</strong> — a good alternative: a button that also appears in near-optimal routes. Larger = more likely.</span></div>
+    <div class="dot-item"><div class="dot dot-gray"></div> <span><strong>Small grey dot</strong> — button that is not a realistic choice for this note.</span></div>
   </div>
 
   <p>Example — three consecutive notes from a jig in G (G3, A3, B3):</p>
@@ -630,33 +630,35 @@ K:Gmaj
     </tbody>
   </table>
 
+  <h2>What the ABC reader understands</h2>
   <p>
-    Sharps in the key signature are applied automatically from the <code>K:</code> field.
-    Explicit accidentals (<code>^</code> sharp, <code>_</code> flat) in the note line
-    are not yet supported — these are stripped during parsing.
+    The ABC is read by the <a href="https://abcjs.net" target="_blank">abcjs</a> library,
+    the same one that draws the sheet music, so what you see in the notation is what gets fingered.
   </p>
-
-  <h2>Supported keys</h2>
+  <ul>
+    <li><strong>Key signatures and modes</strong> (<code>K:G</code>, <code>K:Dmix</code>, <code>K:Ador</code>,
+        <code>K:F</code>, <code>K:G major</code> …) — sharps and flats are applied automatically.</li>
+    <li><strong>Accidentals</strong> in the note line (<code>^c</code> sharp, <code>_B</code> flat,
+        <code>=f</code> natural), including their carry-over within a bar.</li>
+    <li><strong>Octave marks</strong> (<code>C,</code> <code>c'</code> and doubles), ties, triplets and rests.</li>
+    <li><strong>Ignored</strong>: chord symbols (<code>"Am"</code>), decorations (<code>!fermata!</code>, <code>~</code>),
+        comments (<code>%</code>) and lyrics (<code>w:</code>).</li>
+    <li><strong>Repeats</strong> are not unrolled: every written note is fingered once.</li>
+    <li><strong>Grace notes</strong> (<code>{g}</code>) are not fingered.</li>
+    <li><strong>Chords</strong> (<code>[CEG]</code>): only the top note is used.</li>
+    <li>Only the first voice and the first tune in the text are used.</li>
+  </ul>
   <p>
-    The tool automatically applies the correct sharps for the following keys:
-  </p>
-  <table>
-    <thead><tr><th>Note sharpened</th><th>Keys where it applies</th></tr></thead>
-    <tbody>
-      <tr><td>F → F#</td><td>G, D, A, Em, Bm, Cm, Edor, Ador</td></tr>
-      <tr><td>C → C#</td><td>D, A, E, Bm, Edor</td></tr>
-      <tr><td>G → G#</td><td>E, A</td></tr>
-    </tbody>
-  </table>
-  <p>
-    Keys not in this list are treated as having no sharps (e.g. C major, A minor, D Dorian).
+    Whenever something is left out, the line under the Analyse button tells you what.
   </p>
 
   <h2>How the algorithm works</h2>
   <p>
-    The search is a <strong>beam search</strong>. For each note in the tune, all possible
-    buttons that produce that note are looked up. The algorithm then builds all combinations,
-    step by step, keeping only the most promising routes at each step.
+    For each note in the tune, all buttons that produce that note are looked up. Every
+    transition from one button to the next gets a score, and the tool finds the route with the
+    lowest total score. Because the score only depends on pairs of consecutive buttons, this
+    can be solved exactly (dynamic programming, also known as the Viterbi algorithm) — it
+    does not have to guess or prune, and it is instant, even for very long tunes.
   </p>
   <p>
     Each transition between two buttons gets a <strong>score</strong> based on:
@@ -670,23 +672,24 @@ K:Gmaj
     <li>Outer buttons (5) → small penalty</li>
   </ul>
   <p>
-    When the number of routes exceeds 4,096, the worst-scoring routes are pruned.
-    The route with the lowest total score is returned as the best fingering.
+    The route with the lowest total score is the recommended fingering. A second pass
+    works out, for each note, how likely each alternative button is within near-optimal
+    routes; that is what the smaller dots in the diagram show.
   </p>
 
   <h2>Limitations</h2>
   <ul>
     <li>The tool is tuned for a standard <strong>30-button C/G Anglo concertina</strong> only.</li>
-    <li>Notes outside the instrument's range (roughly E1–F#4) are silently skipped.</li>
-    <li>Explicit accidentals (<code>^c</code>, <code>_B</code>) in the note line are not yet parsed.</li>
-    <li>Chords (multiple simultaneous notes) in ABC notation are not supported.</li>
+    <li>Notes outside the instrument's range (roughly E1–F#4) cannot be fingered; they are skipped and listed under the Analyse button.</li>
+    <li>Chords (multiple simultaneous notes) in ABC notation are not supported: only the top note is used.</li>
+    <li>The playback button plays every note with the same length; note lengths from the ABC are not used yet.</li>
     <li>The algorithm finds an optimal route, but "optimal" is based on a scoring model — experienced players may prefer different choices in some passages.</li>
   </ul>
 
   <div class="note">
     <strong>Tip:</strong> If you get unexpected results, check that the <code>K:</code>
-    key field is present and correctly spelled in your ABC. The key signature has a big
-    effect on which notes get sharpened.
+    key field is present and correct in your ABC. The key signature has a big
+    effect on which notes get sharpened or flattened.
   </div>
 
   <h2>About</h2>
