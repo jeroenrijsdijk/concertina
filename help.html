@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Concertina Fingering – Help</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<title>Help – Concertina Fingering Tool for Anglo C/G</title>
+<meta name="description" content="How the Concertina Fingering Tool works: reading ABC notation, the 30-button Anglo C/G layout, push and pull, and how the optimal fingering is calculated.">
+<link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/help.html">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
   :root {
     --bg:      #ddd8d0;
@@ -249,6 +252,13 @@
     text-align: center;
   }
   .footer a { color: var(--muted); }
+
+  /* Phones: wide tables and the example diagram scroll sideways instead of widening the page */
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; }
+    table, .btnmap { display: block; overflow-x: auto; max-width: 100%; }
+    #example-canvas { max-width: 100%; height: auto; }
+  }
 </style>
 </head>
 <body>

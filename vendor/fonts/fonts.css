@@ -1,0 +1,5 @@
+/* Self-hosted fonts (SIL Open Font License, see OFL-*.txt), so no visitor data goes to Google. Latin subset. */
+@font-face { font-family: 'Oswald'; font-style: normal; font-weight: 400; font-display: swap; src: url(oswald-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Oswald'; font-style: normal; font-weight: 600; font-display: swap; src: url(oswald-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 400; font-display: swap; src: url(source-code-pro-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Source Code Pro'; font-style: normal; font-weight: 600; font-display: swap; src: url(source-code-pro-latin-600-normal.woff2) format('woff2'); }

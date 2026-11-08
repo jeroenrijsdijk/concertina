@@ -29,6 +29,8 @@ Results are shown as:
 | `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
 | `help.html` | Help page and manual |
 | `vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
+| `vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |
+| `favicon.svg` | Site icon |
 
 ## Using the web tool
 

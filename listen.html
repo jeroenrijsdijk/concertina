@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Concertina – Live Pitch</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<title>Live Pitch – Which Concertina Button Is This Note?</title>
+<meta name="description" content="Play a note on your Anglo C/G concertina and see its pitch and every button, row and bellows direction that plays it. Runs in your browser; the sound never leaves your device.">
+<link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/listen.html">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
   :root {
     --bg:       #0e0c0a;
@@ -247,6 +250,10 @@
     margin-left: auto;
   }
   .legend span { display: flex; align-items: center; gap: 5px; }
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; row-gap: 6px; }
+    .legend { flex-wrap: wrap; margin-left: 0; }
+  }
   .dot {
     width: 9px; height: 9px;
     border-radius: 50%;
@@ -621,7 +628,7 @@ function drawWaveform() {
 
 function resizeWaveform() {
   const wrap    = document.getElementById("waveform-wrap");
-  wfCanvas.width = wrap.clientWidth - 60;
+  wfCanvas.width = Math.max(wrap.clientWidth - 64, 50);
 }
 
 // =============================================================================
@@ -797,7 +804,11 @@ async function toggleMic() {
     return;
   }
 
-  // Start
+  // Start: the browser only offers the microphone on https:// (or localhost)
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    msg.textContent = "The microphone needs a secure page: open this page via https://.";
+    return;
+  }
   try {
     msg.textContent = "Requesting microphone access…";
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -814,7 +825,9 @@ async function toggleMic() {
 
     detectPitch();
   } catch(e) {
-    msg.textContent = "Microphone access denied. " + e.message;
+    msg.textContent = e.name === "NotAllowedError"  ? "Microphone access was blocked. Allow it in the browser's address bar and try again."
+                    : e.name === "NotFoundError"    ? "No microphone found."
+                    : "Could not start the microphone: " + e.message;
   }
 }
 
