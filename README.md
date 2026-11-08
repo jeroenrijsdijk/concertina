@@ -23,13 +23,15 @@ Results are shown as:
 
 | File | Description |
 |---|---|
-| `concertina.html` | The web tool — self-contained, no dependencies |
+| `concertina.html` | The web tool (includes the abcjs library; needs `keys.js` next to it) |
+| `listen.html` | Live pitch detection from the microphone (needs `keys.js` next to it) |
+| `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
 | `help.html` | Help page and manual |
 | `concertina.rb` | Original Ruby implementation with PNG export via `chunky_png` |
 
 ## Using the web tool
 
-Just open `concertina.html` in a browser. No installation, no server needed.
+Just open `concertina.html` in a browser, with `keys.js` in the same folder. No installation, no server needed.
 
 The Kesh Jig is pre-loaded as an example — click **Analyse** straight away.
 
@@ -67,7 +69,7 @@ Scoring favours:
 
 ## Button layout
 
-This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `concertina.html` (and `KEYS_DATA` constant in `concertina.rb`) can be adapted.
+This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `keys.js` (shared by `concertina.html` and `listen.html`) can be adapted, or upload your own layout in `concertina.html`.
 
 A **Download template** button exports the current layout as JSON. Edit it and upload it with **Upload layout** to use your own instrument. The active layout name is shown in the UI.
 

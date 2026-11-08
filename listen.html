@@ -308,98 +308,30 @@
   </div>
 </div>
 
+<script src="keys.js"></script>
 <script>
-// =============================================================================
-//  Button data  (same KEYS_DATA as concertina.html)
-// =============================================================================
-const KEYS_DATA = {
-   1:{side:1,row:1,button:5,pushpull:1,note:"E1"},
-   2:{side:1,row:1,button:4,pushpull:1,note:"A1"},
-   3:{side:1,row:1,button:3,pushpull:1,note:"C#2"},
-   4:{side:1,row:1,button:2,pushpull:1,note:"A2"},
-   5:{side:1,row:1,button:1,pushpull:1,note:"G#2"},
-   6:{side:1,row:2,button:5,pushpull:1,note:"C1"},
-   7:{side:1,row:2,button:4,pushpull:1,note:"G1"},
-   8:{side:1,row:2,button:3,pushpull:1,note:"C2"},
-   9:{side:1,row:2,button:2,pushpull:1,note:"E2"},
-  10:{side:1,row:2,button:1,pushpull:1,note:"G2"},
-  11:{side:1,row:3,button:5,pushpull:1,note:"B1"},
-  12:{side:1,row:3,button:4,pushpull:1,note:"D2"},
-  13:{side:1,row:3,button:3,pushpull:1,note:"G2"},
-  14:{side:1,row:3,button:2,pushpull:1,note:"B2"},
-  15:{side:1,row:3,button:1,pushpull:1,note:"D3"},
-  16:{side:1,row:1,button:5,pushpull:2,note:"F1"},
-  17:{side:1,row:1,button:4,pushpull:2,note:"BB1"},
-  18:{side:1,row:1,button:3,pushpull:2,note:"D#2"},
-  19:{side:1,row:1,button:2,pushpull:2,note:"G2"},
-  20:{side:1,row:1,button:1,pushpull:2,note:"BB2"},
-  21:{side:1,row:2,button:5,pushpull:2,note:"G1"},
-  22:{side:1,row:2,button:4,pushpull:2,note:"B1"},
-  23:{side:1,row:2,button:3,pushpull:2,note:"D2"},
-  24:{side:1,row:2,button:2,pushpull:2,note:"F2"},
-  25:{side:1,row:2,button:1,pushpull:2,note:"A2"},
-  26:{side:1,row:3,button:5,pushpull:2,note:"A1"},
-  27:{side:1,row:3,button:4,pushpull:2,note:"F#2"},
-  28:{side:1,row:3,button:3,pushpull:2,note:"A2"},
-  29:{side:1,row:3,button:2,pushpull:2,note:"C3"},
-  30:{side:1,row:3,button:1,pushpull:2,note:"E3"},
-  31:{side:2,row:1,button:1,pushpull:1,note:"C#3"},
-  32:{side:2,row:1,button:2,pushpull:1,note:"C#3"},
-  33:{side:2,row:1,button:3,pushpull:1,note:"G#3"},
-  34:{side:2,row:1,button:4,pushpull:1,note:"C#4"},
-  35:{side:2,row:1,button:5,pushpull:1,note:"A4"},
-  36:{side:2,row:2,button:1,pushpull:1,note:"C3"},
-  37:{side:2,row:2,button:2,pushpull:1,note:"E3"},
-  38:{side:2,row:2,button:3,pushpull:1,note:"G3"},
-  39:{side:2,row:2,button:4,pushpull:1,note:"C4"},
-  40:{side:2,row:2,button:5,pushpull:1,note:"E4"},
-  41:{side:2,row:3,button:1,pushpull:1,note:"G3"},
-  42:{side:2,row:3,button:2,pushpull:1,note:"B3"},
-  43:{side:2,row:3,button:3,pushpull:1,note:"D4"},
-  44:{side:2,row:3,button:4,pushpull:1,note:"G4"},
-  45:{side:2,row:3,button:5,pushpull:1,note:"D#4"},
-  46:{side:2,row:1,button:1,pushpull:2,note:"C#3"},
-  47:{side:2,row:1,button:2,pushpull:2,note:"D#3"},
-  48:{side:2,row:1,button:3,pushpull:2,note:"G3"},
-  49:{side:2,row:1,button:4,pushpull:2,note:"BB3"},
-  50:{side:2,row:1,button:5,pushpull:2,note:"D4"},
-  51:{side:2,row:2,button:1,pushpull:2,note:"B2"},
-  52:{side:2,row:2,button:2,pushpull:2,note:"D3"},
-  53:{side:2,row:2,button:3,pushpull:2,note:"F3"},
-  54:{side:2,row:2,button:4,pushpull:2,note:"A3"},
-  55:{side:2,row:2,button:5,pushpull:2,note:"B3"},
-  56:{side:2,row:3,button:1,pushpull:2,note:"F#3"},
-  57:{side:2,row:3,button:2,pushpull:2,note:"A3"},
-  58:{side:2,row:3,button:3,pushpull:2,note:"C4"},
-  59:{side:2,row:3,button:4,pushpull:2,note:"E4"},
-  60:{side:2,row:3,button:5,pushpull:2,note:"F#4"}
-};
+// keys.js must sit next to this file (it holds KEYS_DATA and the note helpers)
+if (typeof KEYS_DATA === "undefined") {
+  document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js was not found. Put <b>keys.js</b> in the same folder as this page.</p>';
+  throw new Error("keys.js missing");
+}
 
 // =============================================================================
 //  Note frequency table
 //  Irish/MUPHIN notation: octave labels are 2 below standard scientific pitch.
 //  C3 (Irish) = C5 (standard) = 523 Hz. Screen always shows Irish labels.
-//  The +2 in noteToHz converts to standard MIDI octaves for Hz calculation only.
+//  noteToMidi() (keys.js) applies the +2 octave shift for the Hz calculation only.
 // =============================================================================
-const A4_HZ = 440;
-const NOTE_SEMITONES = {
-  "C":0,"C#":1,"D":2,"D#":3,"E":4,"F":5,"F#":6,"G":7,"G#":8,"A":9,"BB":10,"B":11
-};
-
 function noteToHz(noteName) {
-  const m = noteName.match(/^([A-G]#?|BB)(\d)$/);
-  if (!m) return null;
-  const semi = NOTE_SEMITONES[m[1]];
-  const oct  = parseInt(m[2]) + 2;   // MUPHIN → standard octave (+2)
-  const midi = (oct + 1) * 12 + semi;
-  return A4_HZ * Math.pow(2, (midi - 69) / 12);
+  const midi = noteToMidi(noteName);
+  return midi === null ? null : midiToHz(midi);
 }
 
 // Build note → button ids map, and Hz lookup table
 const NOTE_BUTTONS = {};
 const BUTTON_HZ    = {};
 
-for (let id = 1; id <= 60; id++) {
+for (const id of buttonIds()) {
   const note = KEYS_DATA[id].note;
   const hz   = noteToHz(note);
   BUTTON_HZ[id] = hz;
@@ -435,7 +367,7 @@ const PHYSICAL = [];   // { side, row, button, pushNote, pullNote }
 
 (function() {
   const byPos = {};
-  for (let id = 1; id <= 60; id++) {
+  for (const id of buttonIds()) {
     const k   = KEYS_DATA[id];
     const key = `${k.side}-${k.row}-${k.button}`;
     if (!byPos[key]) byPos[key] = { side: k.side, row: k.row, button: k.button };
@@ -607,7 +539,7 @@ function updateNoteDisplay(noteName, hz) {
 
   // Find all physical buttons that produce this note
   const matches = [];
-  for (let id = 1; id <= 60; id++) {
+  for (const id of buttonIds()) {
     if (KEYS_DATA[id].note === noteName) matches.push(KEYS_DATA[id]);
   }
 
