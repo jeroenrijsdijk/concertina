@@ -119,6 +119,7 @@
   }
   #status.err { color: var(--pull); }
   #status.ok  { color: var(--ok); }
+  #status.warn { color: #8a5a00; }
 
   /* Route table */
   table {
@@ -388,7 +389,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
           <span><span class="dot dot-push"></span>Push</span>
           <span><span class="dot dot-pull"></span>Pull</span>
           <span><span class="dot dot-gray"></span>Not used</span>
-          <span style="margin-left:8px; font-size:10px;">Larger = more frequent across best routes</span>
+          <span style="margin-left:8px; font-size:10px;">Larger = more likely in near-optimal routes</span>
           <button id="save-btn" onclick="saveImage()" style="margin-left:auto; padding:5px 14px; font-size:12px;">Save Image</button>
           <button onclick="openFullscreen()" style="padding:5px 14px; font-size:12px;">Full Screen</button>
         </div>
@@ -485,12 +486,58 @@ let KEYS_DATA = {
 };
 
 // =============================================================================
+//  Notes
+//  Labels use Irish session notation: two octaves below standard scientific
+//  pitch (Irish C3 = standard C5 = MIDI 72). Sharp = "#", flat = capital "B"
+//  after the letter ("BB1" = B flat, "EB2" = E flat). Notes are compared as
+//  MIDI numbers, so enharmonic spellings (A# / BB) are the same note.
+// =============================================================================
+const SEMITONE    = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+const PITCH_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+function noteToMidi(label) {
+  const m = /^([A-G])(#|B)?(-?\d+)$/.exec(label || "");
+  if (!m) return null;
+  const accidental = m[2] === "#" ? 1 : m[2] === "B" ? -1 : 0;
+  return (parseInt(m[3], 10) + 2 + 1) * 12 + SEMITONE[m[1]] + accidental;
+}
+
+function midiToName(midi) {
+  return PITCH_NAMES[midi % 12] + (Math.floor(midi / 12) - 1 - 2);
+}
+
+function midiToHz(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// =============================================================================
+//  Layout lookups  (built from KEYS_DATA; any number of buttons)
+// =============================================================================
+function buttonIds() {
+  return Object.keys(KEYS_DATA).map(Number).sort((a, b) => a - b);
+}
+
+// MIDI note -> list of button ids that play it
+function buildNoteKeys() {
+  const map = {};
+  for (const id of buttonIds()) {
+    const midi = noteToMidi(KEYS_DATA[id].note);
+    if (midi === null) continue;
+    if (!map[midi]) map[midi] = [];
+    map[midi].push(id);
+  }
+  return map;
+}
+
+// =============================================================================
 //  Distance matrix
 // =============================================================================
 function buildDistmat() {
-  const mat = Array.from({length:61}, () => new Array(61).fill(0));
-  for (let f = 1; f <= 60; f++) {
-    for (let t = 1; t <= 60; t++) {
+  const ids  = buttonIds();
+  const size = ids[ids.length - 1] + 1;
+  const mat  = Array.from({length: size}, () => new Array(size).fill(0));
+  for (const f of ids) {
+    for (const t of ids) {
       if (f === t) { mat[f][t] = -25; continue; }
       const h = hopp(f, t);
       mat[f][t] = h === 100 ? 100
@@ -523,111 +570,76 @@ function prefButton(t) {
 function ppChange(f,t) { return KEYS_DATA[f].pushpull === KEYS_DATA[t].pushpull ? 0 : -1; }
 
 // =============================================================================
-//  Note-to-buttons lookup (built dynamically from KEYS_DATA)
+//  ABC parser
+//  abcjs does the real work (key signatures and modes, accidentals, octave
+//  marks, ties, repeats, chord symbols, decorations, comments). We only read
+//  the resulting MIDI pitches, in written order.
 // =============================================================================
-function buildNoteKeys() {
-  const map = {};
-  for (let id = 1; id <= 60; id++) {
-    const note = KEYS_DATA[id].note;
-    if (!map[note]) map[note] = [];
-    map[note].push(id);
+
+// Title / rhythm / meter / key exactly as typed in the first tune's header
+function readHeader(text) {
+  const names = { T: "title", R: "rhythm", M: "meter", K: "key" };
+  const tune  = {};
+  for (const line of text.split(/\r?\n/)) {
+    const m = /^\s*([TRMK]):\s*(.*?)\s*(?:%.*)?$/.exec(line);
+    if (!m) continue;
+    if (tune[names[m[1]]] === undefined) tune[names[m[1]]] = m[2];
+    if (m[1] === "K") break;               // K: ends the header
   }
-  return map;
+  return tune;
 }
 
-// =============================================================================
-//  ABC Parser
-// =============================================================================
-const SHARPS = {
-  "F": ["G","GMaj","Gmaj","GM","D","DMaj","Dmaj","DM","A","AMaj","Amaj","AM",
-        "Em","Emin","Bm","Bmin","Cm","Cmin","Edor","Ador"],
-  "C": ["D","DMaj","Dmaj","DM","A","AMaj","Amaj","AM","E","EMaj","Emaj","EM",
-        "Bm","Bmin","Edor"],
-  "G": ["E","EMaj","Emaj","EM","A","AMaj","Amaj","AM"]
-};
-
-const ABC_TO_NOTE = {
-  "C,":"C1","D,":"D1","E,":"E1","F,":"F1","G,":"G1","A,":"A1","B,":"B1",
-  "C":"C2","D":"D2","E":"E2","F":"F2","G":"G2","A":"A2","B":"B2",
-  "c":"C3","d":"D3","e":"E3","f":"F3","g":"G3","a":"A3","b":"B3",
-  "c'":"C4","d'":"D4","e'":"E4","f'":"F4","g'":"G4","a'":"A4","b'":"B4"
-};
-
-const DELETE_TOKENS = ["|:",":|","::","|]","[|","|","/","~","=",
-                       "0","1","2","3","4","6","8"];
-
+// Returns { title, rhythm, meter, key, notes: [{midi, start, duration, startChar, endChar, chord}], notices: [text] }
+// Repeats are not unrolled: every written note appears once (same as the fingering you read from the page).
 function parseAbc(text) {
-  const tune = {};
-  let rawNotes = "";
+  const tune = Object.assign(readHeader(text), { notes: [], notices: [] });
 
-  for (const line of text.split(/\r?\n/)) {
-    const l = line.trim();
-    if (l[1] === ":" && l[0] !== "|") {
-      const clean = l.replace(/ /g,"");
-      const type  = clean[0];
-      const val   = clean.slice(2);
-      if (type==="X") tune.number = val;
-      if (type==="T") tune.title  = val;
-      if (type==="R") tune.rhythm = val;
-      if (type==="M") tune.meter  = val;
-      if (type==="L") tune.notelen= val;
-      if (type==="K") tune.key    = val;
-    } else {
-      rawNotes += l;
+  const tunes = ABCJS.parseOnly(text);
+  if (tunes.length === 0) return tune;
+  const abc = tunes[0];
+  if (tunes.length > 1)                  tune.notices.push(`${tunes.length} tunes found, only the first is used`);
+  if (abc.warnings && abc.warnings.length) tune.notices.push(`abcjs reported ${abc.warnings.length} warning(s) in the ABC`);
+
+  const tracks = abc.setUpAudio({}).tracks.filter(tr => tr.some(e => e.cmd === "note"));
+  if (tracks.length === 0) return tune;
+  if (tracks.length > 1) tune.notices.push("only the first voice is used");
+
+  // A repeated passage replays the same source characters, so the first event
+  // per startChar is the written note. Chord notes share startChar *and* start
+  // time: keep the top note (the tool plays one note at a time).
+  const byChar = new Map();
+  let grace = false;
+  for (const e of tracks[0]) {
+    if (e.cmd !== "note") continue;
+    if (e.startChar === undefined) { grace = true; continue; }   // grace notes carry no source position
+    const seen = byChar.get(e.startChar);
+    if (!seen) {
+      byChar.set(e.startChar, { midi: e.pitch, start: e.start, duration: e.duration,
+                                startChar: e.startChar, endChar: e.endChar, chord: 1 });
+    } else if (Math.abs(seen.start - e.start) < 1e-9) {
+      seen.midi = Math.max(seen.midi, e.pitch);
+      seen.chord++;
     }
   }
+  tune.notes = [...byChar.values()].sort((a, b) => a.start - b.start);
 
-  // Build note mapping with sharps applied
-  const key     = tune.key || "";
-  const mapping = {};
-  for (const [abc, note] of Object.entries(ABC_TO_NOTE)) {
-    const base = abc[0].toUpperCase();
-    if (SHARPS[base] && SHARPS[base].includes(key)) {
-      const sharp = note[0] + "#" + note[1];
-      mapping[abc] = sharp.includes("##") ? note : sharp;
-    } else {
-      mapping[abc] = note;
-    }
-  }
-
-  // Strip bar/rhythm tokens
-  let raw = rawNotes;
-  for (const tok of DELETE_TOKENS) {
-    raw = raw.split(tok).join("");
-  }
-  raw = raw.replace(/[ >]/g,"");
-
-  // Parse notes greedily (longest match first)
-  const notes = [];
-  while (raw.length > 0) {
-    let found = null;
-    for (const len of [2,1,0]) {
-      const s = raw.slice(0, len+1);
-      if (mapping[s] !== undefined) { found = s; break; }
-    }
-    if (found) {
-      notes.push(mapping[found]);
-      raw = raw.slice(found.length);
-    } else {
-      raw = raw.slice(1);
-    }
-  }
-
-  tune.notes = notes;
+  const chords = tune.notes.filter(n => n.chord > 1).length;
+  if (chords) tune.notices.push(`${chords} chord(s): only the top note is used`);
+  if (grace)  tune.notices.push("grace notes are not fingered");
   return tune;
 }
 
 // =============================================================================
-//  Beam search
+//  Route search
+//
+//  The score of a route is  startScore(first) + sum of distmat[a][b]  over
+//  consecutive buttons, so the best route is a shortest path through one layer
+//  of candidate buttons per note: Viterbi finds the exact optimum in
+//  O(notes x candidates^2). A second, "soft" pass (forward-backward, with a
+//  temperature) gives for each note the probability of every candidate button
+//  under near-optimal routes; the diagram shows these as the bigger/smaller dots.
 // =============================================================================
-const MAX_ROUTES  = 4096;
-const UPPER_SCORE = 50;
-
-function calcScore(route, distmat) {
-  let s = startScore(route[0]);
-  for (let i = 0; i < route.length - 1; i++) s += distmat[route[i]][route[i+1]];
-  return s;
-}
+const SOFT_T = 10;   // score points; higher = more alternatives look "plausible"
 
 function startScore(btn) {
   const k = KEYS_DATA[btn];
@@ -637,54 +649,77 @@ function startScore(btn) {
   return s;
 }
 
-function thin(routes, distmat) {
-  let divv = 2.0;
-  while (routes.length > MAX_ROUTES) {
-    const scores  = routes.map(r => calcScore(r, distmat));
-    const sorted  = [...scores].sort((a,b)=>a-b);
-    const cutoff  = sorted[Math.floor(sorted.length / divv)];
-    const trimmed = routes.filter((_,i) => scores[i] <= cutoff);
-    if (trimmed.length === routes.length) {
-      divv += 1/6;
-      if (divv > 20) throw new Error("No solution found for this tune.");
-    } else {
-      routes = trimmed;
-    }
-  }
-  return routes;
+function calcScore(route, distmat) {
+  let s = startScore(route[0]);
+  for (let i = 0; i < route.length - 1; i++) s += distmat[route[i]][route[i+1]];
+  return s;
 }
 
-function findBestRoute(notes, noteKeys, distmat) {
-  const options = notes.map(n => noteKeys[n] || []).filter(o => o.length > 0);
-  if (options.length === 0) throw new Error("No notes recognised.");
+// -T * ln( sum exp(-v/T) ), numerically stable
+function softmin(values) {
+  const m = Math.min(...values);
+  let s = 0;
+  for (const v of values) s += Math.exp(-(v - m) / SOFT_T);
+  return m - SOFT_T * Math.log(s);
+}
 
-  let routes = options.shift().map(b => [b]);
-  for (const opts of options) {
-    const next = [];
-    for (const route of routes) {
-      for (const btn of opts) {
-        if (distmat[route[route.length-1]][btn] < UPPER_SCORE) {
-          next.push([...route, btn]);
-        }
-      }
+// midis: MIDI pitch per note. Notes the layout cannot play are skipped (listed in `skipped`).
+// Returns { route, score, summary, indices, skipped }
+//   route    button id per playable note
+//   summary  per playable note: { buttonId: probability }
+//   indices  position in `midis` of each playable note
+//   skipped  positions in `midis` that no button plays
+function findBestRoute(midis, noteKeys, distmat) {
+  const layers = [], indices = [], skipped = [];
+  midis.forEach((m, i) => {
+    const opts = noteKeys[m];
+    if (opts && opts.length) { layers.push(opts); indices.push(i); } else skipped.push(i);
+  });
+  if (layers.length === 0) throw new Error("None of the notes in this tune can be played on the current layout.");
+  const n = layers.length;
+
+  // Viterbi: cheapest way to arrive at every candidate, remembering where it came from
+  const cost = [layers[0].map(startScore)];
+  const from = [null];
+  for (let i = 1; i < n; i++) {
+    const c = [], f = [];
+    for (const btn of layers[i]) {
+      let best = Infinity, arg = 0;
+      layers[i-1].forEach((prev, p) => {
+        const v = cost[i-1][p] + distmat[prev][btn];
+        if (v < best) { best = v; arg = p; }
+      });
+      c.push(best); f.push(arg);
     }
-    routes = next.length > 0 ? next : routes;
-    if (routes.length > MAX_ROUTES) routes = thin(routes, distmat);
+    cost.push(c); from.push(f);
   }
+  let j = 0;
+  cost[n-1].forEach((v, k) => { if (v < cost[n-1][j]) j = k; });
+  const score = cost[n-1][j];
+  const route = new Array(n);
+  for (let i = n - 1; i >= 0; i--) { route[i] = layers[i][j]; if (i > 0) j = from[i][j]; }
 
-  const scored    = routes.map(r => ({ score: calcScore(r, distmat), route: r }));
-  const minScore  = Math.min(...scored.map(s=>s.score));
-  const winner    = scored.filter(s=>s.score===minScore).map(s=>s.route);
-  const bestRoutes= scored.filter(s=>s.score<=minScore+50).slice(0,50).map(s=>s.route);
-
-  // Per-position summary
-  const summary = winner[0].map((_,i) => {
-    const tally = {};
-    bestRoutes.forEach(r => { tally[r[i]] = (tally[r[i]]||0)+1; });
-    return tally;
+  // Soft forward-backward: probability of each candidate under near-optimal routes
+  const fwd = [layers[0].map(startScore)];
+  for (let i = 1; i < n; i++) {
+    fwd.push(layers[i].map(btn => softmin(layers[i-1].map((prev, p) => fwd[i-1][p] + distmat[prev][btn]))));
+  }
+  const bwd = new Array(n);
+  bwd[n-1] = layers[n-1].map(() => 0);
+  for (let i = n - 2; i >= 0; i--) {
+    bwd[i] = layers[i].map(btn => softmin(layers[i+1].map((next, q) => distmat[btn][next] + bwd[i+1][q])));
+  }
+  const summary = layers.map((opts, i) => {
+    const total = opts.map((_, k) => fwd[i][k] + bwd[i][k]);
+    const m = Math.min(...total);
+    const w = total.map(v => Math.exp(-(v - m) / SOFT_T));
+    const z = w.reduce((a, b) => a + b, 0);
+    const probs = {};
+    opts.forEach((btn, k) => { probs[btn] = w[k] / z; });
+    return probs;
   });
 
-  return { route: winner[0], summary, nBest: bestRoutes.length };
+  return { route, score, summary, indices, skipped };
 }
 
 // =============================================================================
@@ -699,6 +734,7 @@ const LABEL_H =  14;   // height reserved for note label above system
 const COL_PUSH = "#1a4fa8";
 const COL_PULL = "#c0281a";
 const COL_GRAY = "rgba(80,70,60,0.35)";
+const MIN_PROB = 0.03;   // alternatives below this probability are drawn as "not used"
 
 function btnX(id) {
   const k    = KEYS_DATA[id];
@@ -711,7 +747,8 @@ function btnY(id) {
   return Math.round(0.05*SYS_H + (k.row-1)*(0.67*SYS_H/3) + k.button*2);
 }
 
-function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, counts, nBest) {
+// probs: { buttonId: probability } for this note (from findBestRoute)
+function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, probs) {
   // Label
   ctx.fillStyle = "#4a3f2f";
   ctx.font      = "bold 10px 'Source Code Pro', monospace";
@@ -720,8 +757,8 @@ function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, counts, nBest) {
 
   const yoff = ybase + LABEL_H;
 
-  // All 60 buttons
-  for (let nn = 1; nn <= 60; nn++) {
+  // All buttons of the layout
+  for (const nn of buttonIds()) {
     const x    = xbase + SYS_W/2 + btnX(nn);
     const y    = yoff              + btnY(nn);
     const pull = KEYS_DATA[nn].pushpull === 2;
@@ -730,9 +767,8 @@ function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, counts, nBest) {
     if (nn === chosenBtn) {
       r     = 7;
       color = pull ? COL_PULL : COL_PUSH;
-    } else if (counts[nn]) {
-      const frac = counts[nn] / nBest;
-      r     = Math.max(3, Math.ceil(6 * Math.sqrt(frac)));
+    } else if (probs[nn] >= MIN_PROB) {
+      r     = Math.max(3, Math.ceil(6 * Math.sqrt(probs[nn])));
       color = pull ? COL_PULL : COL_PUSH;
       ctx.globalAlpha = 0.55;
     } else {
@@ -756,7 +792,8 @@ function drawSystem(ctx, xbase, ybase, noteLabel, chosenBtn, counts, nBest) {
   ctx.fillText(KEYS_DATA[chosenBtn].note, cx, cy + 2.5);
 }
 
-function renderCanvas(route, summary, nBest, notes) {
+// labels: note name per route position (the played note, as the layout names it)
+function renderCanvas(route, summary, labels) {
   const canvas = document.getElementById("viz");
   const nRows  = Math.ceil(route.length / COLS);
   canvas.width  = PAD*2 + COLS * SYS_W;
@@ -771,14 +808,14 @@ function renderCanvas(route, summary, nBest, notes) {
     const row   = Math.floor(i / COLS);
     const xbase = PAD + col * SYS_W;
     const ybase = PAD + row * (SYS_H + LABEL_H);
-    drawSystem(ctx, xbase, ybase, `${i+1}. ${notes[i]}`, btn, summary[i], nBest);
+    drawSystem(ctx, xbase, ybase, `${i+1}. ${labels[i]}`, btn, summary[i]);
   });
 }
 
 // =============================================================================
 //  Route table
 // =============================================================================
-function renderTable(route, notes) {
+function renderTable(route, labels) {
   const tbody = document.getElementById("route-tbody");
   tbody.innerHTML = "";
   const rowNames = ["_","t","c","g"];
@@ -789,7 +826,7 @@ function renderTable(route, notes) {
     const tr  = document.createElement("tr");
     tr.innerHTML = `
       <td>${i+1}</td>
-      <td><strong>${notes[i]}</strong></td>
+      <td><strong>${labels[i]}</strong></td>
       <td>${k.side===1?"left":"right"}</td>
       <td>${rowNames[k.row]}</td>
       <td class="${cls}">${pp}</td>
@@ -847,9 +884,8 @@ function downloadLayout() {
   ctx.fillStyle = "#1a4fa8"; ctx.fillText("PUSH (pushpull=1)", 20, BH - 30);
   ctx.fillStyle = "#c0281a"; ctx.fillText("PULL (pushpull=2)", 20, BH - 14);
 
-  for (let id = 1; id <= 60; id++) {
+  for (const id of buttonIds()) {
     const k    = KEYS_DATA[id];
-    if (!k) continue;
     const side = k.side;       // 1=left, 2=right
     const row  = k.row - 1;   // 0-based
     const btn  = k.button;    // 1..5
@@ -996,6 +1032,20 @@ function downloadJson() {
   URL.revokeObjectURL(link.href);
 }
 
+// Returns a description of what is wrong with one button entry, or null when it is usable
+function validateButton(v) {
+  if (!v || typeof v !== "object") return "not an object";
+  const required = ["side", "row", "button", "pushpull", "note"];
+  const missing  = required.filter(f => v[f] === undefined);
+  if (missing.length > 0) return `missing ${missing.join(", ")}`;
+  if (![1, 2].includes(v.side))     return `side must be 1 or 2 (got ${v.side})`;
+  if (![1, 2, 3].includes(v.row))   return `row must be 1, 2 or 3 (got ${v.row})`;
+  if (![1, 2, 3, 4, 5].includes(v.button)) return `button must be 1 to 5 (got ${v.button})`;
+  if (![1, 2].includes(v.pushpull)) return `pushpull must be 1 or 2 (got ${v.pushpull})`;
+  if (noteToMidi(v.note) === null)  return `unknown note "${v.note}" (use e.g. G3, F#2, BB1)`;
+  return null;
+}
+
 function uploadLayout(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -1012,12 +1062,8 @@ function uploadLayout(event) {
         const id = parseInt(k);
         if (isNaN(id)) continue;
 
-        // Validate required fields
-        const required = ["side", "row", "button", "pushpull", "note"];
-        const missing  = required.filter(f => v[f] === undefined);
-        if (missing.length > 0) {
-          throw new Error(`Button ${id} is missing: ${missing.join(", ")}`);
-        }
+        const problem = validateButton(v);
+        if (problem) throw new Error(`Button ${id}: ${problem}`);
         buttons[id] = v;
       }
 
@@ -1070,20 +1116,7 @@ function saveImage() {
 //  Notation (abcjs basic) + Web Audio player
 // =============================================================================
 
-// Note name → Hz  (Irish octave: label +2 = standard octave)
-const NOTE_SEMI = {C:0,"C#":1,D:2,"D#":3,E:4,F:5,"F#":6,G:7,"G#":8,A:9,BB:10,B:11};
-function noteToHz(name) {
-  const m = name.match(/^([A-G])(#|BB?)?(\d)$/);
-  if (!m) return null;
-  const base = m[1] + (m[2] || "");
-  const semi = NOTE_SEMI[base];
-  if (semi === undefined) return null;
-  const oct  = parseInt(m[3]) + 2;          // Irish → standard octave
-  const midi = (oct + 1) * 12 + semi;       // MIDI note number
-  return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
-let audioCtx    = null;
+let audioCtx   = null;
 let playerNotes = [];   // array of Hz values from last route
 let playerTimer = null;
 let playerIdx   = 0;
@@ -1150,7 +1183,7 @@ function renderNotation(abcText, route) {
   ABCJS.renderAbc("abc-notation", abcText, { responsive: "resize" });
 
   // Build Hz sequence from the winning route
-  playerNotes = route.map(id => noteToHz(KEYS_DATA[id].note));
+  playerNotes = route.map(id => midiToHz(noteToMidi(KEYS_DATA[id].note)));
 }
 
 function run() {
@@ -1182,13 +1215,24 @@ function run() {
 
       if (notes.length === 0) throw new Error("No notes found. Please check your ABC notation.");
 
-      const { route, summary, nBest } = findBestRoute(notes, noteKeys, distmat);
+      const { route, score, summary, skipped } =
+        findBestRoute(notes.map(n => n.midi), noteKeys, distmat);
 
-      renderTable(route, notes);
-      renderCanvas(route, summary, nBest, notes);
+      const labels = route.map(id => KEYS_DATA[id].note);
+      renderTable(route, labels);
+      renderCanvas(route, summary, labels);
 
       document.getElementById("results").classList.remove("hidden");
-      setStatus(`Done — ${notes.length} notes, ${nBest} best routes analysed.`, "ok");
+
+      // Tell the player what was left out, instead of silently dropping it
+      const notices = [...tune.notices];
+      if (skipped.length > 0) {
+        const shown = skipped.slice(0, 5).map(i => `${midiToName(notes[i].midi)} (note ${i+1})`).join(", ");
+        notices.unshift(`${skipped.length} note(s) not on this layout and skipped: ${shown}${skipped.length > 5 ? ", …" : ""}`);
+      }
+      setStatus(`Done — ${route.length} ${route.length === 1 ? "note" : "notes"} fingered, optimal route (score ${score}).` +
+                (notices.length ? "  ⚠ " + notices.join(" · ") : ""),
+                notices.length ? "warn" : "ok");
 
       // Notation + playback
       renderNotation(text, route);
