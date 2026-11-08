@@ -1,6 +1,6 @@
-// keys.js - the button layout and note helpers shared by concertina.html and listen.html.
+// keys.js - the button layout and note helpers shared by index.html and listen.html.
 // Keep both pages in the same folder as this file. To change the built-in layout, edit KEYS_DATA below
-// (or upload a JSON layout in concertina.html).
+// (or upload a JSON layout in index.html).
 
 // =============================================================================
 //  Concertina button data  (default: My Geuns)

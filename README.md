@@ -4,7 +4,7 @@
 
 Paste a tune in ABC notation, click Analyse, and the tool tells you which button to press for each note — and whether to push or pull the bellows.
 
-→ **[Try it online](https://jeroenrijsdijk.github.io/concertina/concertina.html)**
+→ **[Try it online](https://jeroenrijsdijk.github.io/concertina/)**
 
 ---
 
@@ -24,7 +24,7 @@ Results are shown as:
 
 | File | Description |
 |---|---|
-| `concertina.html` | The web tool (needs `keys.js` and `vendor/` next to it) |
+| `index.html` | The web tool (needs `keys.js` and `vendor/` next to it) |
 | `listen.html` | Live pitch detection from the microphone (needs `keys.js` next to it) |
 | `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
 | `help.html` | Help page and manual |
@@ -32,7 +32,7 @@ Results are shown as:
 
 ## Using the web tool
 
-Just open `concertina.html` in a browser, keeping the files of this repository together (`keys.js` and the `vendor` folder next to it). No installation, no server needed.
+Just open `index.html` in a browser, keeping the files of this repository together (`keys.js` and the `vendor` folder next to it). No installation, no server needed.
 
 The Kesh Jig is pre-loaded as an example — click **Analyse** straight away.
 
@@ -56,7 +56,7 @@ Scoring favours:
 
 ## Button layout
 
-This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `keys.js` (shared by `concertina.html` and `listen.html`) can be adapted, or upload your own layout in `concertina.html`.
+This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `keys.js` (shared by `index.html` and `listen.html`) can be adapted, or upload your own layout in `index.html`.
 
 A **Download template** button exports the current layout as JSON. Edit it and upload it with **Upload layout** to use your own instrument. The active layout name is shown in the UI.
 
