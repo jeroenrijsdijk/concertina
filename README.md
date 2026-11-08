@@ -17,37 +17,26 @@ This tool searches through all combinations and picks the route that is easiest 
 Results are shown as:
 - a **table** — hand, row, direction (push/pull), and button number for each note
 - a **button diagram** — all 60 buttons visualised per note, colour-coded push (blue) / pull (red)
-- a **downloadable PNG** — the same diagram laid out on A4, ready to print
+- a **downloadable PNG** — the button diagram as an image
+- **playback** — the tune is played as written (durations, rests, repeats, tempo), so you can hear it
 
 ## Files
 
 | File | Description |
 |---|---|
-| `concertina.html` | The web tool (includes the abcjs library; needs `keys.js` next to it) |
+| `concertina.html` | The web tool (needs `keys.js` and `vendor/` next to it) |
 | `listen.html` | Live pitch detection from the microphone (needs `keys.js` next to it) |
 | `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
 | `help.html` | Help page and manual |
-| `concertina.rb` | Original Ruby implementation with PNG export via `chunky_png` |
+| `vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
 
 ## Using the web tool
 
-Just open `concertina.html` in a browser, with `keys.js` in the same folder. No installation, no server needed.
+Just open `concertina.html` in a browser, keeping the files of this repository together (`keys.js` and the `vendor` folder next to it). No installation, no server needed.
 
 The Kesh Jig is pre-loaded as an example — click **Analyse** straight away.
 
 To use your own tune, paste any ABC notation into the text area. Thousands of tunes in ABC format are available at [thesession.org](https://thesession.org) and [abcnotation.com](https://abcnotation.com).
-
-## Using the Ruby script
-
-Requires the `chunky_png` gem for PNG output.
-
-```bash
-gem install chunky_png
-ruby concertina.rb mytune.abc
-ruby concertina.rb mytune.abc ./output
-```
-
-Output: a printed fingering table in the terminal and one or more A4 PNG files named after the tune.
 
 ## How the algorithm works
 
@@ -58,8 +47,6 @@ The search is **exact** (dynamic programming / Viterbi):
 3. Because a route's score is the sum of its consecutive transitions, the cheapest route through all notes can be found without pruning — in linear time, so even long tunes are instant
 4. The route with the lowest total score is returned
 5. A second, "soft" pass (forward-backward with a temperature) gives the probability of each alternative button per note, shown as the smaller dots in the diagram
-
-(Note: the Ruby script `concertina.rb` still uses the original beam search.)
 
 Scoring favours:
 - Staying on the same hand
@@ -87,22 +74,18 @@ K:Gmaj
 |:GAG GAB|ABA ABd|egd edB|dBA ABd:|
 ```
 
-The ABC is read with [abcjs](https://abcjs.net), the same library that draws the sheet music: key signatures and modes, explicit accidentals (`^c`, `_B`, `=f`), octave marks and ties are handled; chord symbols, decorations and comments are ignored. Repeats are not unrolled, grace notes are not fingered, and for chords only the top note is used. Anything left out is reported under the Analyse button.
+The ABC is read with [abcjs](https://abcjs.net), the same library that draws the sheet music: key signatures and modes, explicit accidentals (`^c`, `_B`, `=f`), octave marks and ties are handled; chord symbols, decorations and comments are ignored. Repeats are not unrolled in the table (but are played), grace notes are not fingered, and for chords only the top note is used. Anything left out is reported under the Analyse button.
 
 ## Known limitations
 
 - 30-button C/G Anglo only (adaptable via `KEYS_DATA`)
 - Notes outside the instrument's range cannot be fingered; they are skipped and listed
 - Chords are not supported (only the top note is used)
-- Playback uses equal note lengths; durations from the ABC are not used yet
-
-## Roadmap
-
-See [`todo.md`](todo.md) for the current wish list.
+- Playback is a simple synthesized tone; ornaments and grace notes are not played
 
 ## History
 
-Originally written in Ruby in 2015–2018. Refactored and ported to a web tool in 2026, with a lot of help from Claude AI.
+Originally written in Ruby in 2015–2018 (that version is no longer part of this repository). Refactored and ported to a web tool in 2026, with a lot of help from Claude AI.
 
 ## License
 

@@ -643,7 +643,7 @@ K:Gmaj
     <li><strong>Octave marks</strong> (<code>C,</code> <code>c'</code> and doubles), ties, triplets and rests.</li>
     <li><strong>Ignored</strong>: chord symbols (<code>"Am"</code>), decorations (<code>!fermata!</code>, <code>~</code>),
         comments (<code>%</code>) and lyrics (<code>w:</code>).</li>
-    <li><strong>Repeats</strong> are not unrolled: every written note is fingered once.</li>
+    <li><strong>Repeats</strong> are not unrolled in the table: every written note is fingered once. The playback does play the repeats.</li>
     <li><strong>Grace notes</strong> (<code>{g}</code>) are not fingered.</li>
     <li><strong>Chords</strong> (<code>[CEG]</code>): only the top note is used.</li>
     <li>Only the first voice and the first tune in the text are used.</li>
@@ -682,7 +682,7 @@ K:Gmaj
     <li>The tool is tuned for a standard <strong>30-button C/G Anglo concertina</strong> only.</li>
     <li>Notes outside the instrument's range (roughly E1–F#4) cannot be fingered; they are skipped and listed under the Analyse button.</li>
     <li>Chords (multiple simultaneous notes) in ABC notation are not supported: only the top note is used.</li>
-    <li>The playback button plays every note with the same length; note lengths from the ABC are not used yet.</li>
+    <li>The playback follows the ABC: note lengths, rests, repeats and the <code>Q:</code> tempo are used. Ornaments, grace notes and chords are not played (chords: top note only), and the sound is a simple synthesized tone.</li>
     <li>The algorithm finds an optimal route, but "optimal" is based on a scoring model — experienced players may prefer different choices in some passages.</li>
   </ul>
 
