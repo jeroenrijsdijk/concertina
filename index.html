@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concertina Fingering Tool – Best Buttons for Anglo C/G</title>
+<meta name="description" content="Free online tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. With sheet music, playback and a practice view for your tablet.">
+<link rel="canonical" href="https://jeroenrijsdijk.nl/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jeroenrijsdijk.nl/">
+<meta property="og:title" content="Concertina Fingering Tool – Best Buttons for Anglo C/G">
+<meta property="og:description" content="Paste an ABC tune and get the easiest button route for your Anglo C/G concertina, with sheet music, playback and a practice view.">
+<meta property="og:image" content="https://jeroenrijsdijk.nl/concertina/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="concertina/vendor/fonts/fonts.css">
+<link rel="stylesheet" href="concertina/style.css">
+<link rel="icon" href="concertina/favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Concertina Fingering Tool",
+ "applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)",
+ "description":"Finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina, with sheet music, playback and a practice view.",
+ "url":"https://jeroenrijsdijk.nl/concertina/concertina.html",
+ "image":"https://jeroenrijsdijk.nl/concertina/img/og.jpg",
+ "author":{"@type":"Person","name":"Jeroen"},
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}
+</script>
+<style>
+  body { font-size: 17px; line-height: 1.65; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 48px; align-items: center; padding: 56px 0 40px; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: 44px; line-height: 1.1; letter-spacing: 0.5px; color: var(--ink); margin-bottom: 18px; }
+  h1 .push { font-weight: 600; } h1 .pull { font-weight: 600; }
+  .lead { font-size: 19px; color: var(--text); margin-bottom: 26px; }
+  .cta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cta .btn { font-size: 17px; padding: 12px 24px; }
+  .shot { border-radius: 14px; border: 10px solid #1d2330; box-shadow: 0 20px 50px rgba(20,33,61,0.25); display: block; width: 100%; height: auto; background: #fff; }
+
+  h2 { font-family: var(--display); font-weight: 600; font-size: 26px; letter-spacing: 0.5px; color: var(--ink); margin-bottom: 14px; }
+  section.block { padding: 36px 0; border-top: 1px solid var(--border); }
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .step b { display: block; font-family: var(--display); font-size: 19px; letter-spacing: 0.4px; color: var(--ink); margin-bottom: 4px; }
+  .step .n { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center;
+             font-family: var(--display); color: #fff; background: var(--ink); margin-bottom: 10px; }
+  .step:nth-child(2) .n { background: var(--push); }
+  .step:nth-child(3) .n { background: var(--pull); }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+  p + p { margin-top: 10px; }
+  footer { padding: 28px 0 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 32px; }
+    h1 { font-size: 34px; }
+    .steps, .two { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="brand" href="./">Concertina Fingering</a>
+  <span class="sub">Anglo C/G · optimal fingering</span>
+  <nav>
+    <a href="concertina/concertina.html">Tool</a>
+    <a href="concertina/concertina.html#practice">Practice</a>
+    <a href="concertina/help.html">Help</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Find the best fingering for your Anglo concertina</h1>
+      <p class="lead">
+        Paste a tune in ABC notation and see which button to press for every note,
+        and whether to <span class="push">push</span> or <span class="pull">pull</span>.
+        Then practise it with the sheet music, playback and the buttons on one screen.
+      </p>
+      <div class="cta">
+        <a class="btn" href="concertina/concertina.html">Open the fingering tool →</a>
+        <a class="btn secondary" href="concertina/concertina.html#practice">Practice view</a>
+      </div>
+    </div>
+    <img class="shot" src="concertina/img/practice.jpg" width="1180" height="820"
+         alt="Practice view of the Concertina Fingering Tool on a tablet: sheet music of The Kesh Jig with the current note marked, the current button large in blue for push, and the next two notes">
+  </div>
+
+  <section class="block">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><b>Paste a tune</b>
+        Any tune in ABC notation. Thousands are free at <a href="https://thesession.org">The Session</a> and <a href="https://abcnotation.com">abcnotation.com</a>.</div>
+      <div class="step"><span class="n">2</span><b>Get the easiest route</b>
+        On a 30-button C/G Anglo most notes can be played in more than one place. The tool finds the route with the fewest jumps between hands and the fewest needless changes of bellows direction.</div>
+      <div class="step"><span class="n">3</span><b>Practise</b>
+        Put a tablet on your music stand: the sheet music, the note you play now and the next two notes, with playback at your own tempo.</div>
+    </div>
+  </section>
+
+  <section class="block two">
+    <div>
+      <h2>What you get</h2>
+      <p>A table with the hand, row, button and bellows direction for every note, and a diagram of the whole keyboard that also shows the good alternatives.</p>
+      <p>The sheet music plays as written, with note lengths, rests and repeats. Tap a note to start from there.</p>
+    </div>
+    <div>
+      <h2>Free and private</h2>
+      <p>The tool runs entirely in your browser: no sign-up, nothing is uploaded. It also works with your own button layout if your instrument differs.</p>
+      <p>Want to check a note by ear? The <a href="concertina/listen.html">Listen</a> page shows which buttons play the note you sound.</p>
+    </div>
+  </section>
+
+  <footer>
+    Made by Jeroen. The original version was hand-written Ruby code; this web version was made with a lot of help from Claude AI.
+    · <a href="https://github.com/jeroenrijsdijk/concertina" rel="noopener">Source code on GitHub</a>
+  </footer>
+</main>
+</body>
+</html>

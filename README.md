@@ -19,26 +19,37 @@ Results are shown as:
 - a **button diagram** — all 60 buttons visualised per note, colour-coded push (blue) / pull (red)
 - a **downloadable PNG** — the button diagram as an image
 - **playback** — the tune is played as written (durations, rests, repeats, tempo), so you can hear it
+- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home)
 
 ## Files
 
+The repository is the whole website [jeroenrijsdijk.nl](https://jeroenrijsdijk.nl/) (GitHub Pages, see `CNAME`): the intro page in the root, the tool in `concertina/`.
+
 | File | Description |
 |---|---|
-| `concertina.html` | The web tool (needs `keys.js` and `vendor/` next to it) |
-| `listen.html` | Live pitch detection from the microphone (needs `keys.js` next to it) |
-| `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
-| `help.html` | Help page and manual |
-| `vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
-| `vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |
-| `favicon.svg` | Site icon |
+| `index.html` | Intro page of the website |
+| `robots.txt`, `sitemap.xml` | For search engines |
+| `CNAME` | The domain GitHub Pages serves this repository on |
+| `concertina/concertina.html` | The web tool: Analyse view and Practice view (`#practice`) |
+| `concertina/practice.js` | The practice view; follows the cursor of `concertina.html` |
+| `concertina/listen.html` | Live pitch detection from the microphone |
+| `concertina/help.html` | Help page and manual |
+| `concertina/keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by the pages |
+| `concertina/style.css` | Shared look of all pages (colours, header, buttons) |
+| `concertina/vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
+| `concertina/vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |
+| `concertina/img/` | Screenshot for the intro page and for link previews (`og.jpg`, 1200×630) |
+| `concertina/favicon.svg` | Site icon |
 
 ## Using the web tool
 
-Just open `concertina.html` in a browser, keeping the files of this repository together (`keys.js` and the `vendor` folder next to it). No installation, no server needed.
+Open `concertina/concertina.html` in a browser, keeping the files of the `concertina` folder together. No installation, no server needed. The tool remembers the last tune you analysed (in the browser's local storage).
 
-The Kesh Jig is pre-loaded as an example — click **Analyse** straight away.
+The Kesh Jig is pre-loaded as an example.
 
 To use your own tune, paste any ABC notation into the text area. Thousands of tunes in ABC format are available at [thesession.org](https://thesession.org) and [abcnotation.com](https://abcnotation.com).
+
+To host the site elsewhere: copy the repository as it is (without `README.md`, `LICENSE` and `CNAME`).
 
 ## How the algorithm works
 
@@ -58,7 +69,7 @@ Scoring favours:
 
 ## Button layout
 
-This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `keys.js` (shared by `concertina.html` and `listen.html`) can be adapted, or upload your own layout in `concertina.html`.
+This tool is tuned for a standard **30-button C/G Anglo concertina**. The full note layout is documented in `help.html`. If your instrument differs, the `KEYS_DATA` object in `concertina/keys.js` (shared by `concertina.html` and `listen.html`) can be adapted, or upload your own layout in `concertina.html`.
 
 A **Download template** button exports the current layout as JSON. Edit it and upload it with **Upload layout** to use your own instrument. The active layout name is shown in the UI.
 
