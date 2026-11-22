@@ -23,13 +23,13 @@ Results are shown as:
 
 ## Files
 
-The repository is the whole website [jeroenrijsdijk.nl](https://jeroenrijsdijk.nl/) (GitHub Pages, see `CNAME`): the intro page in the root, the tool in `concertina/`.
+The repository is the whole website [jeroenrijsdijk.nl](https://jeroenrijsdijk.nl/): the intro page in the root, the tool in `concertina/`. After every change on `main`, a GitHub Action uploads it to the web host (see *Publishing* below).
 
 | File | Description |
 |---|---|
 | `index.html` | Intro page of the website |
 | `robots.txt`, `sitemap.xml` | For search engines |
-| `CNAME` | The domain GitHub Pages serves this repository on |
+| `.github/` | The publishing workflow and its upload script (not part of the website) |
 | `concertina/concertina.html` | The web tool: Analyse view and Practice view (`#practice`) |
 | `concertina/practice.js` | The practice view; follows the cursor of `concertina.html` |
 | `concertina/listen.html` | Live pitch detection from the microphone |
@@ -49,7 +49,23 @@ The Kesh Jig is pre-loaded as an example.
 
 To use your own tune, paste any ABC notation into the text area. Thousands of tunes in ABC format are available at [thesession.org](https://thesession.org) and [abcnotation.com](https://abcnotation.com).
 
-To host the site elsewhere: copy the repository as it is (without `README.md`, `LICENSE` and `CNAME`).
+## Publishing
+
+`.github/workflows/deploy.yml` runs after every push or merge to `main` (or by hand: *Actions → Deploy website → Run workflow*). It runs `.github/deploy.sh`, which uploads the site with `lftp` over FTP (TLS when the host offers it), FTPS or SFTP. It only uploads and overwrites; nothing on the host is deleted, so other files on the site stay.
+
+Settings, under *Settings → Secrets and variables → Actions*:
+
+| Kind | Name | Example |
+|---|---|---|
+| secret | `DEPLOY_SERVER` | `ftp.example.nl` |
+| secret | `DEPLOY_USER` | your FTP login |
+| secret | `DEPLOY_PASSWORD` | your FTP password |
+| variable | `DEPLOY_DIR` | `/public_html` (the website folder on the host) |
+| variable | `DEPLOY_PROTOCOL` | `ftp` (default), `ftps` or `sftp` |
+| variable | `DEPLOY_PORT` | only for a non-standard port |
+| variable | `DEPLOY_VERIFY_TLS` | `no` if the host's certificate does not match its name |
+
+To publish by hand instead: copy the repository as it is, without `README.md`, `LICENSE` and `.github/`.
 
 ## How the algorithm works
 
