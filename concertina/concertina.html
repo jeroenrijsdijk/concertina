@@ -241,7 +241,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
         <button class="btn small" id="play-btn" onclick="togglePlay()">▶ Play</button>
         <button class="btn secondary small" onclick="setCursor(0)" title="Back to the start">⏮</button>
         <label class="tempo">Tempo
-          <input id="tempo-slider" class="tempo-input" type="range" min="40" max="240" value="120">
+          <input id="tempo-slider" class="tempo-input" type="range" min="10" max="240" value="120">
           <span><span id="tempo-val" class="tempo-out">120</span> bpm</span>
         </label>
         <span id="player-status"></span>
@@ -291,7 +291,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       <button class="p-btn play" id="p-play" onclick="togglePlay()" title="Play / pause (space)" aria-label="Play">▶</button>
       <button class="p-btn step" onclick="stepCursor(1)" title="Next note (→)" aria-label="Next note">›</button>
       <label class="p-tempo">Tempo
-        <input id="p-tempo" class="tempo-input" type="range" min="40" max="240" value="120">
+        <input id="p-tempo" class="tempo-input" type="range" min="10" max="240" value="120">
         <output class="tempo-out">120</output>
       </label>
       <span class="p-pos" id="p-pos"></span>
@@ -1078,19 +1078,26 @@ function markTable(k) {
 onHook("cursor", k => { markSheets(k); markTable(k); });
 
 // =============================================================================
-//  Web Audio player
-//  Every note is scheduled up front on the audio clock, so timing does not depend
-//  on timers or on how busy the page is. Plays from the cursor, as written:
-//  real durations, rests and repeats (from tune.timeline).
+//  Web Audio player: a look-ahead scheduler
+//  Notes are put on the audio clock a little ahead of time (sample-exact timing),
+//  but only the next fraction of a second, so the tempo can change while playing.
+//  The musical position is an anchor (at audio time T we were at position P, in
+//  whole notes) plus a speed; a tempo change moves the anchor to "now" and
+//  replans the notes that have not started yet. Plays from the cursor, as
+//  written: real durations, rests and repeats (from tune.timeline).
 // =============================================================================
 const NOTE_PEAK   = 0.35;   // loudness of one note
 const NOTE_ATTACK = 0.01;   // seconds of fade-in; avoids a click at the start of each note
 const NOTE_GAP    = 0.04;   // seconds of silence at the end of a note (so repeated notes are heard apart)
 const LEAD_IN     = 0.10;   // seconds between pressing Play and the first note
+const TICK_MS     = 25;     // how often the scheduler looks ahead
+const AHEAD       = 0.25;   // seconds of notes planned ahead ...
+const AHEAD_BG    = 1.5;    // ... and in a background tab, where the browser slows timers to ~1 per second
+const TEMPO_MIN   = 10, TEMPO_MAX = 240;
 
 let audioCtx = null;
 let playback = null;        // { events: [{hz, start, duration, routePos}], beatLength, bpm, routeLength }
-let player   = null;        // while playing: { master, oscs, t0, secPerWhole, from, raf, endTimer }
+let player   = null;        // while playing: { master, notes, anchorTime, anchorPos, secPerWhole, next, from, timer, raf }
 
 function playNote(dest, hz, when, length) {
   const osc  = audioCtx.createOscillator();
@@ -1107,7 +1114,7 @@ function playNote(dest, hz, when, length) {
   gain.gain.linearRampToValueAtTime(0, end + 0.02);        // an exponential ramp never reaches 0
   osc.start(when);
   osc.stop(end + 0.03);
-  return osc;
+  return { osc, when, end: end + 0.03 };
 }
 
 function setPlayButtons(playing) {
@@ -1117,16 +1124,61 @@ function setPlayButtons(playing) {
   p.setAttribute("aria-label", playing ? "Pause" : "Play");
 }
 
+// Seconds per whole note at the tempo on the slider (= beats per minute of the tune's own beat)
+function secondsPerWhole() {
+  const bpm = parseInt(document.getElementById("tempo-slider").value) || 120;
+  return 60 / bpm / playback.beatLength;
+}
+
+// Musical position (in whole notes) <-> audio time, from the anchor
+const posAt  = t   => player.anchorPos + (t - player.anchorTime) / player.secPerWhole;
+const timeAt = pos => player.anchorTime + (pos - player.anchorPos) * player.secPerWhole;
+
+// Plan every note that starts before the look-ahead horizon; stop at the end of the tune
+function schedule() {
+  if (!player) return;
+  const ev  = playback.events;
+  const now = audioCtx.currentTime;
+  const horizon = now + (document.hidden ? AHEAD_BG : AHEAD);
+  while (player.next < ev.length && timeAt(ev[player.next].start) < horizon) {
+    const e = ev[player.next];
+    player.notes.push(playNote(player.master, e.hz, timeAt(e.start), e.duration * player.secPerWhole));
+    player.next++;
+  }
+  player.notes = player.notes.filter(n => n.end > now);          // forget notes that are over
+  const last = ev[ev.length - 1];
+  if (player.next >= ev.length && now > timeAt(last.start + last.duration) + 0.15) {
+    stopPlayer();
+    setCursor(0);                                                 // the end: ready to play from the start
+  }
+}
+
+// New tempo while playing: anchor at "now", new speed, replan the notes that have not started
+function retime() {
+  if (!player) return;
+  const now = audioCtx.currentTime;
+  if (now > player.anchorTime) {                                  // (during the lead-in the anchor stays put)
+    player.anchorPos  = posAt(now);
+    player.anchorTime = now;
+  }
+  player.secPerWhole = secondsPerWhole();
+  const waiting = player.notes.filter(n => n.when > now);
+  waiting.forEach(n => { try { n.osc.stop(0); } catch (e) { /* fine */ } });
+  player.notes = player.notes.filter(n => n.when <= now);
+  player.next -= waiting.length;                                  // they are planned again, at the new tempo
+  schedule();
+}
+
 // Stops the sound; the cursor stays on the note that was sounding (play again = continue)
 function stopPlayer() {
   if (player) {
     const t = audioCtx.currentTime;
-    clearTimeout(player.endTimer);
+    clearInterval(player.timer);
     cancelAnimationFrame(player.raf);
     player.master.gain.cancelScheduledValues(t);
     player.master.gain.setValueAtTime(player.master.gain.value, t);
     player.master.gain.linearRampToValueAtTime(0, t + 0.03);    // short fade-out: no click
-    player.oscs.forEach(o => { try { o.stop(t + 0.04); } catch (e) { /* already stopped */ } });
+    player.notes.forEach(n => { try { n.osc.stop(t + 0.04); } catch (e) { /* already stopped */ } });
     player = null;
   }
   setPlayButtons(false);
@@ -1136,10 +1188,11 @@ function stopPlayer() {
 // Follows the audio clock: moves the cursor to the note that is sounding now
 function followPlayer() {
   if (!player) return;
-  const ev    = playback.events;
-  const whole = (audioCtx.currentTime - player.t0) / player.secPerWhole + ev[player.from].start;
+  const ev  = playback.events;
+  const pos = posAt(audioCtx.currentTime);
   let k = player.from;
-  while (k + 1 < ev.length && ev[k + 1].start <= whole + 1e-9) k++;
+  while (k + 1 < ev.length && ev[k + 1].start <= pos + 1e-9) k++;
+  player.from = k;                                                // never look back: repeats replay earlier notes
   document.getElementById("player-status").textContent = `♩ ${ev[k].routePos + 1} / ${playback.routeLength}`;
   if (k !== cursor) { cursor = k; emit("cursor", k); }
   player.raf = requestAnimationFrame(followPlayer);
@@ -1152,32 +1205,26 @@ function togglePlay() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
 
-  const bpm         = parseInt(document.getElementById("tempo-slider").value) || 120;
-  const secPerWhole = 60 / bpm / playback.beatLength;       // slider = beats per minute of the tune's own beat
-  const t0          = audioCtx.currentTime + LEAD_IN;
-  const events      = playback.events;
-  const from        = Math.min(cursor, events.length - 1);
-  const base        = events[from].start;
-
+  const from   = Math.min(cursor, playback.events.length - 1);
   const master = audioCtx.createGain();
   master.connect(audioCtx.destination);
-  const oscs = events.slice(from).map(e =>
-    playNote(master, e.hz, t0 + (e.start - base) * secPerWhole, e.duration * secPerWhole));
-
-  const last  = events[events.length - 1];
-  const total = (last.start + last.duration - base) * secPerWhole;
-  // At the end: reset the buttons and go back to the start (works in a background tab too)
-  const endTimer = setTimeout(() => { stopPlayer(); setCursor(0); }, (LEAD_IN + total) * 1000 + 150);
-  player = { master, oscs, t0, secPerWhole, from, raf: 0, endTimer };
+  player = { master, notes: [], from, next: from, raf: 0, timer: 0,
+             anchorTime: audioCtx.currentTime + LEAD_IN, anchorPos: playback.events[from].start,
+             secPerWhole: secondsPerWhole() };
+  player.timer = setInterval(schedule, TICK_MS);
+  schedule();
 
   setPlayButtons(true);
   followPlayer();
 }
 
-// One tempo for both views: every .tempo-input and .tempo-out follows the last change
+// One tempo for both views: every .tempo-input and .tempo-out follows the last change.
+// While playing, the new tempo takes effect at once.
 function setTempo(bpm) {
+  bpm = Math.min(Math.max(Math.round(+bpm) || 120, TEMPO_MIN), TEMPO_MAX);
   document.querySelectorAll(".tempo-input").forEach(el => { el.value = bpm; });
   document.querySelectorAll(".tempo-out").forEach(el => { el.textContent = bpm; });
+  retime();
 }
 document.querySelectorAll(".tempo-input").forEach(el => el.addEventListener("input", () => setTempo(el.value)));
 
