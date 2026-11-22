@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Live Pitch – Which Concertina Button Is This Note?</title>
-<meta name="description" content="Play a note on your Anglo C/G concertina and see its pitch and every button, row and bellows direction that plays it. Runs in your browser; the sound never leaves your device.">
+<meta name="description" content="Play a note on your Anglo C/G concertina and see its pitch and every button that plays it, push or pull. Runs in your browser; no sound is uploaded.">
 <link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/listen.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jeroenrijsdijk.nl/concertina/listen.html">
+<meta property="og:title" content="Live Pitch – Which Concertina Button Is This Note?">
+<meta property="og:image" content="https://jeroenrijsdijk.nl/concertina/img/og.jpg">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
@@ -141,6 +145,17 @@
   }
 
   canvas { display: block; }
+  #canvas-wrap { position: relative; }
+  #intro {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(560px, calc(100% - 40px));
+    background: rgba(20, 32, 57, 0.94); border: 1px solid var(--border); border-radius: 10px;
+    padding: 22px 26px; font-family: var(--sans); font-size: 15px; line-height: 1.6; color: var(--text);
+  }
+  #intro h1 { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
+  #intro p + p { margin-top: 8px; }
+  #intro a { color: var(--glow-p); }
+  body.listening #intro { display: none; }
 
   /* ── Controls ────────────────────────────────── */
   #controls {
@@ -266,6 +281,15 @@
 
 <div id="canvas-wrap">
   <canvas id="tina-canvas"></canvas>
+  <section id="intro" aria-label="About this page">
+    <h1>Which concertina button plays this note?</h1>
+    <p>Play a note on your Anglo C/G concertina and this page shows its pitch and every button that plays it:
+       left or right hand, row, button number, and whether you push or pull the bellows.</p>
+    <p>Press <b>Start</b> and allow the microphone. The sound is analysed in your browser and never leaves your device.
+       Buttons light up in blue for push and red for pull; buttons 1 and 2 (nearest the player) light up brightest.
+       Use <b>Threshold</b> to ignore background noise.</p>
+    <p>To find the easiest fingering for a whole tune, use the <a href="concertina.html">Concertina Fingering Tool</a>.</p>
+  </section>
 </div>
 
 <div id="waveform-wrap">
@@ -804,6 +828,7 @@ async function toggleMic() {
   if (isRunning) {
     // Stop
     isRunning = false;
+    document.body.classList.remove("listening");
     if (micStream) micStream.getTracks().forEach(t => t.stop());
     if (audioCtx)  audioCtx.close();
     audioCtx = analyser = micStream = null;
@@ -833,6 +858,7 @@ async function toggleMic() {
     audioCtx.createMediaStreamSource(micStream).connect(analyser);
 
     isRunning = true;
+    document.body.classList.add("listening");
     btn.textContent = "■ Stop";
     btn.classList.add("active");
     msg.textContent = `Listening… (${audioCtx.sampleRate} Hz)`;
