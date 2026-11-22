@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Concertina Fingering Tool – Best Buttons for Anglo C/G</title>
-<meta name="description" content="Free online tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. Includes sheet music and playback.">
+<title>ABC to Anglo Concertina Fingering – C/G Button Finder</title>
+<meta name="description" content="Paste an ABC tune and get the best button, row and push or pull for every note on a 30-button Anglo C/G concertina. Sheet music, playback, practice view.">
 <link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/concertina.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Concertina Fingering Tool – Best Buttons for Anglo C/G">
-<meta property="og:description" content="Free online tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. Includes sheet music and playback.">
+<meta property="og:title" content="ABC to Anglo Concertina Fingering – C/G Button Finder">
+<meta property="og:description" content="Paste an ABC tune and get the optimal button, row and push or pull for every note on a 30-button Anglo C/G concertina. With sheet music, playback and a practice view for tablets.">
 <meta property="og:url" content="https://jeroenrijsdijk.nl/concertina/concertina.html">
 <meta property="og:image" content="https://jeroenrijsdijk.nl/concertina/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -90,6 +90,15 @@
   .legend .tools { margin-left: auto; display: flex; gap: 6px; }
   #canvas-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
   #viz { display: block; margin: 0 auto; }
+
+  .page-head h1 { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0.3px; color: var(--ink); line-height: 1.2; }
+  .page-head p  { color: var(--muted); font-size: 15px; margin-top: 2px; }
+  .about { max-width: 860px; line-height: 1.65; }
+  .about h2 { font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .about h3 { font-family: var(--display); font-size: 16px; font-weight: 600; color: var(--ink); margin: 14px 0 6px; }
+  .about p + p { margin-top: 8px; }
+  .about ol { padding-left: 22px; }
+  .about li { margin-bottom: 4px; }
 
   .hidden { display: none !important; }
 
@@ -192,6 +201,11 @@
 
 <main class="analyse" id="view-analyse">
 
+  <div class="page-head">
+    <h1>Anglo concertina fingering from ABC notation</h1>
+    <p>Paste a tune, press Analyse, and see which button to press for every note on a 30-button C/G Anglo — and whether to push or pull.</p>
+  </div>
+
   <div class="grid-top">
     <section class="panel abc-panel">
       <div class="panel-title">ABC notation</div>
@@ -276,6 +290,26 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       </section>
     </div>
   </div>
+
+  <section class="panel about">
+    <h2>About the Concertina Fingering Tool</h2>
+    <p>The Concertina Fingering Tool finds the easiest fingering for any tune on a 30-button Anglo concertina in C/G.
+       An Anglo concertina is bisonoric: each button plays one note when you push the bellows and another when you pull.
+       On a C/G Anglo, 17 of the 39 notes can be played on more than one button, so a single tune has thousands of possible fingerings.</p>
+    <p>The tool reads the tune in ABC notation and calculates the route through the buttons that is easiest to play:
+       no finger has to jump to another row, the next note is played on the same button by reversing the bellows where possible,
+       and the c and g rows and the buttons nearest the player are preferred.
+       The search is exact, so the result is the best route under these rules, not an estimate, and it takes well under a second even for long tunes.</p>
+    <h3>How to use it</h3>
+    <ol>
+      <li>Copy a tune in ABC notation, for example from <a href="https://thesession.org">The Session</a> or <a href="https://abcnotation.com">abcnotation.com</a>, and paste it into the ABC notation box.</li>
+      <li>Press <b>Analyse</b>. The table shows the hand, row, button number and bellows direction (push or pull) for every note; the diagram shows the buttons and good alternatives.</li>
+      <li>Press <b>Play</b> to hear the tune as written, with note lengths, rests and repeats. Click a note or a table row to start from there.</li>
+      <li>Open the <a href="#practice">Practice view</a> on a tablet: sheet music, the current note large in blue (push) or red (pull), and the next two notes.</li>
+    </ol>
+    <p>The tool is free, runs entirely in your browser and uploads nothing. If your instrument differs, download the layout template, edit it and upload your own layout.
+       More in the <a href="help.html">help and manual</a>, including the full C/G button map.</p>
+  </section>
 </main>
 
 <!-- Practice view: everything a player needs while holding the instrument, on one screen -->

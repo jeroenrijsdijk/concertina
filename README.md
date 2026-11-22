@@ -12,7 +12,7 @@ Paste a tune in ABC notation, click Analyse, and the tool tells you which button
 
 An Anglo concertina is bisonoric: each button produces a different note on push and pull. Many notes can be played on more than one button, so for a full tune there are often thousands of possible fingering combinations.
 
-This tool searches through all combinations and picks the route that is easiest to play, minimising awkward jumps, finger hops, and unnecessary bellows reversals.
+This tool searches through all combinations and picks the route that is easiest to play: no finger jumping to another row (finger hops), the next note on the same button by reversing the bellows where possible, and the c and g rows and the buttons nearest the player.
 
 Results are shown as:
 - a **table** — hand, row, direction (push/pull), and button number for each note

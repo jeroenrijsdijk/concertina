@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Concertina Fingering Tool – Best Buttons for Anglo C/G</title>
-<meta name="description" content="Free online tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. With sheet music, playback and a practice view for your tablet.">
+<meta name="description" content="Free tool that finds the easiest fingering for any ABC tune on a 30-button Anglo C/G concertina: which button, push or pull. With playback and a practice view.">
 <link rel="canonical" href="https://jeroenrijsdijk.nl/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://jeroenrijsdijk.nl/">
@@ -25,6 +25,79 @@
  "image":"https://jeroenrijsdijk.nl/concertina/img/og.jpg",
  "author":{"@type":"Person","name":"Jeroen"},
  "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}
+</script>
+<!-- FAQ for search engines: the same questions and answers as the FAQ section below; keep them in step -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What does the Concertina Fingering Tool do?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The Concertina Fingering Tool finds the easiest fingering for any tune on a 30-button Anglo concertina in C/G. You paste a tune in ABC notation, and for every note it shows which hand, row and button to use, and whether to push or pull the bellows."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Which concertinas does it support?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The tool is made for the 30-button Anglo concertina in C/G. If your instrument's layout differs, you can download the layout as a template, change the notes and upload it again; the tool then calculates the fingering for your own layout."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How do I turn an ABC tune into Anglo concertina fingering?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Copy a tune in ABC notation, for example from The Session or abcnotation.com, paste it into the Concertina Fingering Tool and press Analyse. You get a table with hand, row, button and push or pull for every note, a button diagram, the sheet music and playback."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Why can one note be played on different buttons of an Anglo concertina?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "An Anglo concertina is bisonoric: every button plays one note on the push and another on the pull, and the rows overlap. On a 30-button C/G Anglo, 17 of the 39 notes can be played on more than one button; the G and the A above middle C can each be played in three places."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How does the tool choose the best fingering?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Every move from one button to the next gets a score. A route is penalised heavily when one finger has to jump to another row, and less for using the t (accidental) row or the outermost buttons; it is rewarded for playing the next note on the same button by reversing the bellows, and for the buttons nearest the player. The tool then finds the route with the best total score with an exact search (dynamic programming), so the result is the best route under these rules, not an estimate."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I practise a tune with it on a tablet?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. The Practice view shows the sheet music with the current note marked, the button for that note large in blue for push or red for pull, and the next two notes. You can play the tune at any tempo from 10 to 240 beats per minute, change the tempo while it plays, step note by note, and use a keyboard or a page-turner pedal."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can it tell me which button plays the note I am playing?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. The Listen page uses your microphone to detect the note you play on your concertina and lights up every button that plays it, in blue for push and red for pull. The sound is analysed in your browser and never leaves your device."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is the Concertina Fingering Tool free?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. The tool is free, needs no account and runs entirely in your web browser; your tunes are not uploaded anywhere. The source code is public on GitHub."
+   }
+  }
+ ]
+}
 </script>
 <style>
   body { font-size: 17px; line-height: 1.65; }
@@ -49,12 +122,15 @@
   .step:nth-child(3) .n { background: var(--pull); }
   .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
   p + p { margin-top: 10px; }
+  .faq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 32px; }
+  .qa h3 { font-family: var(--display); font-size: 18px; font-weight: 600; letter-spacing: 0.3px; color: var(--ink); margin-bottom: 4px; line-height: 1.3; }
+  .qa p { font-size: 16px; }
   footer { padding: 28px 0 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); }
 
   @media (max-width: 860px) {
     .hero { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 32px; }
     h1 { font-size: 34px; }
-    .steps, .two { grid-template-columns: minmax(0, 1fr); }
+    .steps, .two, .faq { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
 </head>
@@ -94,7 +170,7 @@
       <div class="step"><span class="n">1</span><b>Paste a tune</b>
         Any tune in ABC notation. Thousands are free at <a href="https://thesession.org">The Session</a> and <a href="https://abcnotation.com">abcnotation.com</a>.</div>
       <div class="step"><span class="n">2</span><b>Get the easiest route</b>
-        On a 30-button C/G Anglo most notes can be played in more than one place. The tool finds the route with the fewest jumps between hands and the fewest needless changes of bellows direction.</div>
+        On a 30-button C/G Anglo most notes can be played in more than one place. The tool finds the route where no finger has to jump to another row, the next note can often be played on the same button by reversing the bellows, and the c and g rows and the buttons nearest the player are preferred.</div>
       <div class="step"><span class="n">3</span><b>Practise</b>
         Put a tablet on your music stand: the sheet music, the note you play now and the next two notes, with playback at your own tempo.</div>
     </div>
@@ -110,6 +186,44 @@
       <h2>Free and private</h2>
       <p>The tool runs entirely in your browser: no sign-up, nothing is uploaded. It also works with your own button layout if your instrument differs.</p>
       <p>Want to check a note by ear? The <a href="concertina/listen.html">Listen</a> page shows which buttons play the note you sound.</p>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <h2>Frequently asked questions</h2>
+    <div class="faq">
+    <div class="qa">
+      <h3>What does the Concertina Fingering Tool do?</h3>
+      <p>The Concertina Fingering Tool finds the easiest fingering for any tune on a 30-button Anglo concertina in C/G. You paste a tune in ABC notation, and for every note it shows which hand, row and button to use, and whether to push or pull the bellows.</p>
+    </div>
+    <div class="qa">
+      <h3>Which concertinas does it support?</h3>
+      <p>The tool is made for the 30-button Anglo concertina in C/G. If your instrument&#x27;s layout differs, you can download the layout as a template, change the notes and upload it again; the tool then calculates the fingering for your own layout.</p>
+    </div>
+    <div class="qa">
+      <h3>How do I turn an ABC tune into Anglo concertina fingering?</h3>
+      <p>Copy a tune in ABC notation, for example from The Session or abcnotation.com, paste it into the Concertina Fingering Tool and press Analyse. You get a table with hand, row, button and push or pull for every note, a button diagram, the sheet music and playback.</p>
+    </div>
+    <div class="qa">
+      <h3>Why can one note be played on different buttons of an Anglo concertina?</h3>
+      <p>An Anglo concertina is bisonoric: every button plays one note on the push and another on the pull, and the rows overlap. On a 30-button C/G Anglo, 17 of the 39 notes can be played on more than one button; the G and the A above middle C can each be played in three places.</p>
+    </div>
+    <div class="qa">
+      <h3>How does the tool choose the best fingering?</h3>
+      <p>Every move from one button to the next gets a score. A route is penalised heavily when one finger has to jump to another row, and less for using the t (accidental) row or the outermost buttons; it is rewarded for playing the next note on the same button by reversing the bellows, and for the buttons nearest the player. The tool then finds the route with the best total score with an exact search (dynamic programming), so the result is the best route under these rules, not an estimate.</p>
+    </div>
+    <div class="qa">
+      <h3>Can I practise a tune with it on a tablet?</h3>
+      <p>Yes. The Practice view shows the sheet music with the current note marked, the button for that note large in blue for push or red for pull, and the next two notes. You can play the tune at any tempo from 10 to 240 beats per minute, change the tempo while it plays, step note by note, and use a keyboard or a page-turner pedal.</p>
+    </div>
+    <div class="qa">
+      <h3>Can it tell me which button plays the note I am playing?</h3>
+      <p>Yes. The Listen page uses your microphone to detect the note you play on your concertina and lights up every button that plays it, in blue for push and red for pull. The sound is analysed in your browser and never leaves your device.</p>
+    </div>
+    <div class="qa">
+      <h3>Is the Concertina Fingering Tool free?</h3>
+      <p>Yes. The tool is free, needs no account and runs entirely in your web browser; your tunes are not uploaded anywhere. The source code is public on GitHub.</p>
+    </div>
     </div>
   </section>
 
