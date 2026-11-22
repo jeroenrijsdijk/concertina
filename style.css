@@ -1,0 +1,149 @@
+/* =============================================================================
+   Shared look of the concertina pages (tool, help, listen, website intro).
+   Principle: the chrome is neutral (ink blue + greys). Blue and red are kept for
+   their meaning — push and pull — so they stand out wherever they appear.
+   ============================================================================= */
+:root {
+  --bg:        #f3f4f7;   /* page */
+  --panel:     #ffffff;   /* cards and panels */
+  --surface:   #eef1f6;   /* tinted blocks: code, table heads, callouts */
+  --border:    #dde1e8;
+  --border-2:  #c7cdd8;
+  --text:      #1d2330;
+  --muted:     #5b6577;
+  --ink:       #14213d;   /* header, primary buttons, headings */
+  --ink-2:     #263a63;   /* hover */
+  --accent:    var(--ink);
+  --push:      #1a4fa8;
+  --pull:      #c0281a;
+  --push-soft: #e7eefb;
+  --pull-soft: #fbe9e7;
+  --ok:        #2f6b3a;
+  --warn:      #8a5a00;
+  --radius:    8px;
+  --hdr-h:     58px;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display: 'Oswald', var(--sans);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--push); }
+code, pre, kbd, textarea, .mono { font-family: var(--mono); }
+
+/* ---------- Header: ink bar with a push|pull "bellows" stripe ---------- */
+.site-header {
+  position: relative;
+  background: var(--ink);
+  color: #fff;
+  min-height: var(--hdr-h);
+  padding: 8px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px 18px;
+  flex-wrap: wrap;
+}
+.site-header::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--push) 0 50%, var(--pull) 50% 100%);
+}
+.site-header .brand {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-header .sub { font-size: 13px; color: rgba(255,255,255,0.65); }
+.site-header nav { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.site-header nav a {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.25);
+  white-space: nowrap;
+}
+.site-header nav a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.site-header nav a[aria-current="page"] { background: #fff; color: var(--ink); border-color: #fff; }
+
+/* ---------- Buttons ---------- */
+.btn, button.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  padding: 9px 22px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover { background: var(--ink-2); border-color: var(--ink-2); }
+.btn:disabled { background: var(--border-2); border-color: var(--border-2); cursor: default; }
+.btn.secondary { background: transparent; color: var(--ink); border-color: var(--border-2); }
+.btn.secondary:hover { background: var(--surface); }
+.btn.small { font-size: 13px; padding: 5px 12px; }
+.btn:focus-visible, .site-header nav a:focus-visible { outline: 3px solid var(--push); outline-offset: 2px; }
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.panel-title {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* push / pull text and dots, used on every page */
+.push { color: var(--push); font-weight: 600; }
+.pull { color: var(--pull); font-weight: 600; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+.dot-push { background: var(--push); }
+.dot-pull { background: var(--pull); }
+.dot-gray { background: #8b93a3; opacity: 0.55; }
+
+input[type=range] { accent-color: var(--ink); }
+
+@media (max-width: 640px) {
+  .site-header { padding: 8px 12px 12px; }
+  .site-header .brand { font-size: 19px; }
+  .site-header nav { margin-left: 0; }
+}

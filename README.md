@@ -19,22 +19,34 @@ Results are shown as:
 - a **button diagram** — all 60 buttons visualised per note, colour-coded push (blue) / pull (red)
 - a **downloadable PNG** — the button diagram as an image
 - **playback** — the tune is played as written (durations, rests, repeats, tempo), so you can hear it
+- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home)
 
 ## Files
 
 | File | Description |
 |---|---|
-| `concertina.html` | The web tool (needs `keys.js` and `vendor/` next to it) |
+| `concertina.html` | The web tool: Analyse view and Practice view (`#practice`) |
+| `practice.js` | The practice view; follows the cursor of `concertina.html` |
+| `style.css` | Shared look of all pages (colours, header, buttons) |
 | `listen.html` | Live pitch detection from the microphone (needs `keys.js` next to it) |
 | `keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by both pages |
 | `help.html` | Help page and manual |
 | `vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
 | `vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |
 | `favicon.svg` | Site icon |
+| `img/` | Screenshot for the website and for link previews (`og.jpg`, 1200×630) |
+| `website/` | Root files for jeroenrijsdijk.nl: the intro page `index.html`, `robots.txt`, `sitemap.xml` |
 
 ## Using the web tool
 
-Just open `concertina.html` in a browser, keeping the files of this repository together (`keys.js` and the `vendor` folder next to it). No installation, no server needed.
+Just open `concertina.html` in a browser, keeping the files of this repository together. No installation, no server needed. The tool remembers the last tune you analysed (in the browser's local storage).
+
+## Putting it on the website
+
+The website has the intro page in its root and the tool in `/concertina/`:
+
+- copy the contents of `website/` to the root of the site;
+- copy everything else (except `website/`, `README.md` and `LICENSE`) to `/concertina/`.
 
 The Kesh Jig is pre-loaded as an example — click **Analyse** straight away.
 

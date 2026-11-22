@@ -8,18 +8,19 @@
 <link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/listen.html">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 <style>
   :root {
-    --bg:       #0e0c0a;
-    --surface:  #1a1612;
-    --border:   #2e2820;
-    --text:     #e8e0d4;
-    --muted:    #6b6259;
+    --bg:       #0c1424;
+    --surface:  #142039;
+    --border:   #24335a;
+    --text:     #e8edf5;
+    --muted:    #8090ad;
     --push:     #3a7bd5;
     --pull:     #d94f3a;
     --glow-p:   #5a9ff5;
     --glow-r:   #ff6b52;
-    --accent:   #c8a96e;
+    --accent:   #dfe6f2;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,49 +28,18 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Source Code Pro', monospace;
+    font-family: var(--mono);
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
 
-  /* ── Header ─────────────────────────────────── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  header h1 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  header a {
-    font-family: 'Oswald', sans-serif;
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--muted);
-    text-decoration: none;
-    border: 1px solid var(--border);
-    padding: 4px 10px;
-  }
-  header a:hover { color: var(--text); border-color: var(--muted); }
-
   /* ── Note display ────────────────────────────── */
   #note-display {
     position: absolute;
-    top: 52px;
+    top: calc(var(--hdr-h) + 8px);
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -85,7 +55,7 @@
     letter-spacing: 4px;
     line-height: 1;
     color: var(--text);
-    text-shadow: 0 0 40px rgba(200,169,110,0.4);
+    text-shadow: 0 0 40px rgba(150,180,230,0.35);
     transition: color 0.1s;
     display: inline-block;
   }
@@ -118,7 +88,7 @@
   /* ── Volume bar ──────────────────────────────── */
   #vol-wrap {
     position: absolute;
-    top: 60px;
+    top: calc(var(--hdr-h) + 16px);
     right: 20px;
     display: flex;
     flex-direction: column;
@@ -209,13 +179,14 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     background: var(--accent);
-    color: #0e0c0a;
+    color: #0c1424;
     border: none;
+    border-radius: 6px;
     padding: 8px 24px;
     cursor: pointer;
     transition: background 0.15s;
   }
-  #mic-btn:hover  { background: #e0bf7e; }
+  #mic-btn:hover  { background: #ffffff; }
   #mic-btn.active { background: var(--pull); color: #fff; }
 
   .ctrl-group {
@@ -251,7 +222,6 @@
   }
   .legend span { display: flex; align-items: center; gap: 5px; }
   @media (max-width: 640px) {
-    header { flex-wrap: wrap; row-gap: 6px; }
     .legend { flex-wrap: wrap; margin-left: 0; }
   }
   .dot {
@@ -269,10 +239,15 @@
 </head>
 <body>
 
-<header>
-  <h1>Concertina · Live Pitch</h1>
-  <a href="concertina.html">← Fingering tool</a>
-  <span id="status-msg" style="margin-left:8px;">Click Start to open microphone</span>
+<header class="site-header">
+  <a class="brand" href="concertina.html">Concertina Fingering</a>
+  <span class="sub" id="status-msg">Click Start to open the microphone</span>
+  <nav>
+    <a href="concertina.html#analyse">Analyse</a>
+    <a href="concertina.html#practice">Practice</a>
+    <a href="listen.html" aria-current="page">Listen</a>
+    <a href="help.html">Help</a>
+  </nav>
 </header>
 
 <div id="note-display">
@@ -310,7 +285,7 @@
   <div class="legend">
     <span><span class="dot" style="background:var(--glow-p)"></span>Push</span>
     <span><span class="dot" style="background:var(--glow-r)"></span>Pull</span>
-    <span><span class="dot" style="background:#333; border:1px solid #444"></span>Inactive</span>
+    <span><span class="dot" style="background:#1f2c48; border:1px solid #2b3a5c"></span>Inactive</span>
     <span style="color:var(--accent); font-size:10px;">★ btn 1 &amp; 2 brightest</span>
   </div>
 </div>
@@ -322,6 +297,8 @@ if (typeof KEYS_DATA === "undefined") {
   document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js was not found. Put <b>keys.js</b> in the same folder as this page.</p>';
   throw new Error("keys.js missing");
 }
+
+const ACCENT = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#dfe6f2";
 
 // =============================================================================
 //  Note frequency table
@@ -444,7 +421,7 @@ function drawFrame() {
   // Hand labels
   ctx.font      = "600 11px 'Oswald', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillStyle = "#3a3028";
+  ctx.fillStyle = "#2b3a5c";
   const leftMid  = canvas.width * 0.01 + canvas.width * 0.44 / 2;
   const rightMid = canvas.width * 0.55 + canvas.width * 0.44 / 2;
   ctx.fillText("LEFT HAND",  leftMid,  canvas.height * 0.02 + 10);
@@ -455,7 +432,7 @@ function drawFrame() {
   const TOP_Y  = canvas.height * 0.06;
   const SLOT_H = HAND_H / 3;
   ctx.font      = "300 22px 'Oswald', sans-serif";
-  ctx.fillStyle = "#2a2218";
+  ctx.fillStyle = "#1f2c48";
   ["t","c","g"].forEach((name, i) => {
     ctx.fillText(name, canvas.width * 0.495, TOP_Y + i * SLOT_H + SLOT_H / 2 + 8);
   });
@@ -484,13 +461,13 @@ function drawFrame() {
       ? (isPull
           ? `rgba(${lerp(60,255,br)},${lerp(20,80,br)},${lerp(20,40,br)},1)`
           : `rgba(${lerp(20,40,br)},${lerp(50,100,br)},${lerp(60,220,br)},1)`)
-      : "#161210";
+      : "#111b30";
     ctx.fill();
 
     // Stroke
     ctx.strokeStyle = br > 0.05
       ? (isPull ? `rgba(255,107,82,${0.4+br*0.6})` : `rgba(90,159,245,${0.4+br*0.6})`)
-      : "#2a2218";
+      : "#1f2c48";
     ctx.lineWidth = br > 0.3 ? 1.5 : 0.8;
     ctx.stroke();
 
@@ -513,21 +490,21 @@ function drawFrame() {
       // Inactive note: tiny, top corner, barely visible
       if (inactNote) {
         ctx.font      = `400 ${fsSmall}px 'Source Code Pro', monospace`;
-        ctx.fillStyle = "rgba(80,70,60,0.4)";
+        ctx.fillStyle = "rgba(90,105,140,0.45)";
         ctx.fillText(inactNote, pos.x, pos.y - pos.r * 0.52);
       }
     } else {
       // Not lit: both notes small as reference
       ctx.font      = `400 ${fsSmall}px 'Source Code Pro', monospace`;
-      ctx.fillStyle = "#2a2218";
+      ctx.fillStyle = "#1f2c48";
       ctx.fillText(p.pushNote || "–", pos.x, pos.y - pos.r * 0.1);
-      ctx.fillStyle = "#221810";
+      ctx.fillStyle = "#18243d";
       ctx.fillText(p.pullNote || "–", pos.x, pos.y + pos.r * 0.55);
     }
 
     // Button number (tiny, bottom edge)
     ctx.font      = `8px 'Source Code Pro', monospace`;
-    ctx.fillStyle = lit ? "rgba(180,160,120,0.4)" : "#1e1810";
+    ctx.fillStyle = lit ? "rgba(170,185,215,0.4)" : "#16213a";
     ctx.fillText("btn" + p.button, pos.x, pos.y + pos.r * 0.9);
   });
 }
@@ -572,13 +549,13 @@ function drawWaveform() {
   const W = wfCanvas.width;
   const H = wfCanvas.height;
 
-  wfCtx.fillStyle = "#0e0c0a";
+  wfCtx.fillStyle = "#0c1424";
   wfCtx.fillRect(0, 0, W, H);
 
   // Threshold line
   const threshold = parseInt(document.getElementById("thresh-slider").value) / 1000;
   const threshY   = H / 2 - (threshold / 0.1) * (H / 2) * 0.8;
-  wfCtx.strokeStyle = "#2e2820";
+  wfCtx.strokeStyle = "#24335a";
   wfCtx.lineWidth   = 1;
   wfCtx.setLineDash([4, 4]);
   wfCtx.beginPath();
@@ -588,7 +565,7 @@ function drawWaveform() {
   wfCtx.setLineDash([]);
 
   if (!isRunning) {
-    wfCtx.fillStyle = "#2a2218";
+    wfCtx.fillStyle = "#1f2c48";
     wfCtx.font      = "10px 'Source Code Pro', monospace";
     wfCtx.textAlign = "center";
     wfCtx.fillText("microphone off", W / 2, H / 2 + 4);
@@ -607,7 +584,7 @@ function drawWaveform() {
   const aboveThresh = rms >= threshold;
 
   wfCtx.beginPath();
-  wfCtx.strokeStyle = aboveThresh ? "var(--accent)" : "#2e2820";
+  wfCtx.strokeStyle = aboveThresh ? ACCENT : "#24335a";
   wfCtx.lineWidth   = 1;
 
   for (let x = 0; x < W; x++) {
@@ -620,7 +597,7 @@ function drawWaveform() {
 
   // RMS level label
   const db = rms > 0 ? Math.round(20 * Math.log10(rms)) : -99;
-  wfCtx.fillStyle = aboveThresh ? "var(--accent)" : "#3a3028";
+  wfCtx.fillStyle = aboveThresh ? ACCENT : "#2b3a5c";
   wfCtx.font      = "9px 'Source Code Pro', monospace";
   wfCtx.textAlign = "right";
   wfCtx.fillText(db + " dB", W - 4, H - 4);

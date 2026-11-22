@@ -8,64 +8,9 @@
 <link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/help.html">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 <style>
-  :root {
-    --bg:      #ddd8d0;
-    --surface: #ccc6bc;
-    --border:  #b0a898;
-    --text:    #2a2520;
-    --muted:   #6b6259;
-    --push:    #1a4fa8;
-    --pull:    #c0281a;
-    --accent:  #4a3f2f;
-    --ok:      #2e7d32;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Source Code Pro', monospace;
-    font-size: 13px;
-    line-height: 1.75;
-  }
-
-  header {
-    background: var(--accent);
-    color: #f0ebe3;
-    padding: 12px 20px;
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
-  header h1 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-  header .sub {
-    font-size: 11px;
-    opacity: 0.65;
-    letter-spacing: 0.5px;
-  }
-  header a.back {
-    margin-left: auto;
-    font-family: 'Oswald', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: #f0ebe3;
-    text-decoration: none;
-    border: 1px solid rgba(255,255,255,0.35);
-    padding: 5px 12px;
-    transition: background 0.15s;
-  }
-  header a.back:hover { background: rgba(255,255,255,0.12); }
-
+  body { font-size: 16px; line-height: 1.65; }
   .page {
     max-width: 740px;
     margin: 0 auto;
@@ -75,11 +20,11 @@
   /* Section headings */
   h2 {
     font-family: 'Oswald', sans-serif;
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--ink);
     margin: 40px 0 10px;
     padding-bottom: 4px;
     border-bottom: 2px solid var(--border);
@@ -88,7 +33,7 @@
 
   h3 {
     font-family: 'Oswald', sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -106,8 +51,8 @@
 
   /* Inline code */
   code {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 12px;
+    font-size: 13px;
+    border-radius: 4px;
     background: var(--surface);
     border: 1px solid var(--border);
     padding: 1px 5px;
@@ -117,7 +62,8 @@
   pre {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
+    border-left: 3px solid var(--ink);
+    border-radius: 4px;
     padding: 12px 14px;
     overflow-x: auto;
     font-size: 12px;
@@ -129,10 +75,11 @@
   .note {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--ok);
+    border-left: 3px solid var(--ink);
+    border-radius: 4px;
     padding: 10px 14px;
     margin: 12px 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
   }
   .note strong { color: var(--text); }
@@ -226,19 +173,19 @@
     width: 12px;
     text-align: right;
   }
-  .btn {
+  .kbtn {
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: var(--accent);
-    color: #f0ebe3;
+    background: var(--ink);
+    color: #fff;
     font-size: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Source Code Pro', monospace;
   }
-  .btn.push { background: var(--push); }
-  .btn.pull { background: var(--pull); }
+  .kbtn.push { background: var(--push); }
+  .kbtn.pull { background: var(--pull); }
 
   hr {
     border: none;
@@ -255,18 +202,24 @@
 
   /* Phones: wide tables and the example diagram scroll sideways instead of widening the page */
   @media (max-width: 640px) {
-    header { flex-wrap: wrap; }
+
     table, .btnmap { display: block; overflow-x: auto; max-width: 100%; }
+    .page { padding: 20px 16px 48px; }
     #example-canvas { max-width: 100%; height: auto; }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Concertina Fingering</h1>
-  <span class="sub">Help &amp; Manual</span>
-  <a class="back" href="concertina.html">← Back to tool</a>
+<header class="site-header">
+  <a class="brand" href="concertina.html">Concertina Fingering</a>
+  <span class="sub">Help &amp; manual</span>
+  <nav>
+    <a href="concertina.html#analyse">Analyse</a>
+    <a href="concertina.html#practice">Practice</a>
+    <a href="listen.html">Listen</a>
+    <a href="help.html" aria-current="page">Help</a>
+  </nav>
 </header>
 
 <div class="page">
@@ -298,13 +251,13 @@
       <div class="hand-label">Left hand</div>
       <div class="rows">
         <div class="brow"><span class="row-label">t</span>
-          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+          <div class="kbtn">5</div><div class="kbtn">4</div><div class="kbtn">3</div><div class="kbtn">2</div><div class="kbtn">1</div>
         </div>
         <div class="brow"><span class="row-label">c</span>
-          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+          <div class="kbtn">5</div><div class="kbtn">4</div><div class="kbtn">3</div><div class="kbtn">2</div><div class="kbtn">1</div>
         </div>
         <div class="brow"><span class="row-label">g</span>
-          <div class="btn">5</div><div class="btn">4</div><div class="btn">3</div><div class="btn">2</div><div class="btn">1</div>
+          <div class="kbtn">5</div><div class="kbtn">4</div><div class="kbtn">3</div><div class="kbtn">2</div><div class="kbtn">1</div>
         </div>
       </div>
     </div>
@@ -312,13 +265,13 @@
       <div class="hand-label">Right hand</div>
       <div class="rows">
         <div class="brow">
-          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">t</span>
+          <div class="kbtn">1</div><div class="kbtn">2</div><div class="kbtn">3</div><div class="kbtn">4</div><div class="kbtn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">t</span>
         </div>
         <div class="brow">
-          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">c</span>
+          <div class="kbtn">1</div><div class="kbtn">2</div><div class="kbtn">3</div><div class="kbtn">4</div><div class="kbtn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">c</span>
         </div>
         <div class="brow">
-          <div class="btn">1</div><div class="btn">2</div><div class="btn">3</div><div class="btn">4</div><div class="btn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">g</span>
+          <div class="kbtn">1</div><div class="kbtn">2</div><div class="kbtn">3</div><div class="kbtn">4</div><div class="kbtn">5</div><span class="row-label" style="text-align:left; width:auto; padding-left:4px;">g</span>
         </div>
       </div>
     </div>
@@ -343,7 +296,7 @@
     .pull-text  { color: var(--pull); font-weight: 600; }
     .btnmap {
       border-collapse: collapse;
-      font-size: 11px;
+      font-size: 13px;
       width: 100%;
       margin: 10px 0 20px;
     }
@@ -352,8 +305,8 @@
       font-size: 10px;
       letter-spacing: 0.6px;
       text-transform: uppercase;
-      background: var(--accent);
-      color: #f0ebe3;
+      background: var(--ink);
+      color: #fff;
       padding: 5px 8px;
       text-align: center;
     }
@@ -363,8 +316,8 @@
       width: 28px;
     }
     .btnmap th.hand-h {
-      background: var(--accent);
-      color: #f0ebe3;
+      background: var(--ink);
+      color: #fff;
     }
     .btnmap td {
       text-align: center;
@@ -488,6 +441,30 @@ K:Gmaj
     <li><strong>Button Diagram</strong> — a visual overview of all 60 buttons for each note in the tune.</li>
   </ul>
 
+  <h3>4. Listen, click, practise</h3>
+  <p>
+    <strong>Play</strong> plays the tune as written, with its note lengths, rests and repeats.
+    Click a note in the sheet music or a row in the table to start from there; the note being
+    played is marked in blue (push) or red (pull).
+  </p>
+
+  <h2>Practice view</h2>
+  <p>
+    The <a href="concertina.html#practice">Practice</a> tab is made for a tablet on a music stand,
+    with the concertina in your hands. One screen shows:
+  </p>
+  <ul>
+    <li>the <strong>sheet music</strong>, with the current note marked;</li>
+    <li>the <strong>current note</strong> large: push or pull in colour, the note name, and the button on both hands, with <em>⇄ bellows</em> when the bellows direction changes;</li>
+    <li>the <strong>next two notes</strong> smaller, so you can read ahead.</li>
+  </ul>
+  <p>
+    Play and pause, step note by note, or tap a note in the music to jump there.
+    With a keyboard or a page-turner pedal: <code>space</code> play/pause,
+    <code>→</code> / <code>Page Down</code> next note, <code>←</code> / <code>Page Up</code> previous note,
+    <code>Home</code> back to the start. The tool remembers the last tune you analysed on this device.
+  </p>
+
   <h2>Reading the button diagram</h2>
   <p>Each small diagram represents one note in the tune, labelled by position and note name (e.g. <code>3. G3</code>). Inside each diagram, all 60 buttons are shown as dots:</p>
 
@@ -565,7 +542,7 @@ K:Gmaj
       const ybase = PAD;
 
       // Label
-      ctx.fillStyle = "#4a3f2f";
+      ctx.fillStyle = "#14213d";
       ctx.font = "bold 10px 'Source Code Pro', monospace";
       ctx.textAlign = "center";
       ctx.fillText(ex.label, xbase + SW/2, ybase + 10);
