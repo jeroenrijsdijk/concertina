@@ -1,0 +1,37 @@
+# Puts the website on jeroenrijsdijk.nl after every change on main.
+# The upload itself is in .github/deploy.sh (settings are explained there).
+# Run it by hand: Actions -> Deploy website -> Run workflow.
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lftp
+        run: sudo apt-get update -q && sudo apt-get install -y -q lftp
+
+      - name: Upload to the web host
+        env:
+          DEPLOY_SERVER:     ${{ secrets.DEPLOY_SERVER }}
+          DEPLOY_USER:       ${{ secrets.DEPLOY_USER }}
+          LFTP_PASSWORD:     ${{ secrets.DEPLOY_PASSWORD }}
+          DEPLOY_DIR:        ${{ vars.DEPLOY_DIR }}
+          DEPLOY_PROTOCOL:   ${{ vars.DEPLOY_PROTOCOL }}
+          DEPLOY_PORT:       ${{ vars.DEPLOY_PORT }}
+          DEPLOY_VERIFY_TLS: ${{ vars.DEPLOY_VERIFY_TLS }}
+        run: bash .github/deploy.sh
