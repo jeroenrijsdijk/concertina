@@ -640,7 +640,7 @@ function animationLoop() {
 }
 
 // =============================================================================
-//  Pitch detection  (HPS — Harmonic Product Spectrum)
+//  Pitch detection  (loudest peak, then a check for the true fundamental below it)
 // =============================================================================
 let audioCtx = null, analyser = null, micStream = null;
 let isRunning = false;
@@ -721,40 +721,77 @@ function detectPitch() {
   setTimeout(detectPitch, 35);
 }
 
-// Concertina reeds produce a strong fundamental — direct FFT peak is more
-// reliable than HPS, especially in the high register where harmonics are weak.
+// Pitch = the fundamental, not simply the loudest peak.
+// A reed (and a small tablet microphone, which weakens low tones) often makes the
+// 2nd or 3rd harmonic louder than the fundamental; the loudest peak is then an
+// octave (or a twelfth) too high. So after finding the loudest peak fp, look below
+// it: the lowest fp/k (k = 6..2) that is a note of the instrument and has a real
+// peak of its own is the fundamental. "Real" = clearly above the local noise floor
+// and not more than SUB_RANGE dB weaker than the loudest peak.
+const SUB_MAX_K   = 6;    // highest harmonic number that may pass for the loudest peak
+const SUB_RANGE   = 30;   // dB a fundamental may be weaker than its loudest harmonic
+const SUB_PROMINENCE = 12; // dB a fundamental must stand above the noise around it
+
 function detectFFTPeak() {
   const freqBuf = new Float32Array(analyser.frequencyBinCount);
   analyser.getFloatFrequencyData(freqBuf);   // dB values
+  return findFundamental(freqBuf, audioCtx.sampleRate / analyser.fftSize);
+}
 
-  const N     = freqBuf.length;
-  const binHz = audioCtx.sampleRate / analyser.fftSize;
-
-  // Search only within the instrument's actual frequency range
+// freqBuf: spectrum in dB, binHz: width of one bin. Returns { hz, clarity } or null.
+function findFundamental(freqBuf, binHz) {
+  const N      = freqBuf.length;
   const minBin = Math.max(1,   Math.floor(HZ_MIN / binHz));
   const maxBin = Math.min(N-2, Math.ceil( HZ_MAX / binHz));
 
-  // Find the strongest peak in range
+  // Loudest peak within the instrument's range
   let bestBin = minBin, bestVal = -Infinity;
   for (let i = minBin; i <= maxBin; i++) {
     if (freqBuf[i] > bestVal) { bestVal = freqBuf[i]; bestBin = i; }
   }
 
-  // Parabolic interpolation for sub-bin accuracy
-  const y1 = freqBuf[bestBin - 1], y2 = freqBuf[bestBin], y3 = freqBuf[bestBin + 1];
-  const denom = 2 * y2 - y1 - y3;
-  const hz = denom > 0
-    ? (bestBin + (y1 - y3) / (2 * denom)) * binHz
-    : bestBin * binHz;
-
-  // Clarity: peak prominence above local mean (dB)
-  // A clean tone: 15+ dB above mean. Noise: near 0.
+  // Clarity: peak prominence above the mean of the range (dB). Clean tone: 15+ dB.
   let mean = 0;
   for (let i = minBin; i <= maxBin; i++) mean += freqBuf[i];
   mean /= (maxBin - minBin + 1);
   const clarity = bestVal - mean;
 
-  return { hz, clarity };
+  const peakHz = interpolate(freqBuf, bestBin) * binHz;
+
+  // Is the loudest peak a harmonic? Try the lowest candidates first.
+  for (let k = SUB_MAX_K; k >= 2; k--) {
+    const note = hzToNote(peakHz / k);
+    if (!note) continue;
+    const b = localMax(freqBuf, Math.round(note.hz / binHz), 2);
+    if (b < 1 || b >= N - 1) continue;
+    if (freqBuf[b] < bestVal - SUB_RANGE) continue;
+    if (freqBuf[b] < noiseFloor(freqBuf, b) + SUB_PROMINENCE) continue;
+    return { hz: interpolate(freqBuf, b) * binHz, clarity };
+  }
+  return { hz: peakHz, clarity };
+}
+
+// Bin of the highest value within +-radius of bin i
+function localMax(buf, i, radius) {
+  let best = i;
+  for (let j = Math.max(1, i - radius); j <= Math.min(buf.length - 2, i + radius); j++) if (buf[j] > buf[best]) best = j;
+  return best;
+}
+
+// Median level around bin i (a third of an octave each way), leaving out the peak itself
+function noiseFloor(buf, i) {
+  const lo = Math.max(1, Math.floor(i / 1.26)), hi = Math.min(buf.length - 1, Math.ceil(i * 1.26));
+  const vals = [];
+  for (let j = lo; j <= hi; j++) if (Math.abs(j - i) > 3) vals.push(buf[j]);
+  vals.sort((x, y) => x - y);
+  return vals.length ? vals[vals.length >> 1] : -Infinity;
+}
+
+// Parabolic interpolation around a peak bin, for sub-bin accuracy
+function interpolate(buf, i) {
+  const y1 = buf[i - 1], y2 = buf[i], y3 = buf[i + 1];
+  const denom = 2 * y2 - y1 - y3;
+  return denom > 0 ? i + (y1 - y3) / (2 * denom) : i;
 }
 
 // =============================================================================
