@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Pitch – Which Concertina Button Is This Note?</title>
+<title>Live Pitch (beta) – Which Concertina Button Is This Note?</title>
 <meta name="description" content="Play a note on your Anglo C/G concertina and see its pitch and every button that plays it, push or pull. Runs in your browser; no sound is uploaded.">
 <link rel="canonical" href="https://jeroenrijsdijk.nl/concertina/listen.html">
 <meta property="og:type" content="website">
@@ -152,9 +152,17 @@
     width: min(560px, calc(100% - 40px));
     background: rgba(20, 32, 57, 0.94); border: 1px solid var(--border); border-radius: 10px;
     padding: 22px 26px; font-family: var(--sans); font-size: 15px; line-height: 1.6; color: var(--text);
+    max-height: calc(100% - 24px); overflow-y: auto;          /* small screens: scroll inside the box */
+  }
+  @media (max-width: 640px) {
+    #intro { padding: 14px 16px; font-size: 14px; line-height: 1.5; }
+    #intro h1 { font-size: 19px; }
   }
   #intro h1 { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
   #intro p + p { margin-top: 8px; }
+  #intro .beta { font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+                 vertical-align: middle; color: #0c1424; background: #f0c24b; border-radius: 4px; padding: 2px 7px; margin-left: 6px; }
+  #intro .beta-note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 8px; }
   #intro a { color: var(--glow-p); }
   body.listening #intro { display: none; }
 
@@ -283,13 +291,18 @@
 <div id="canvas-wrap">
   <canvas id="tina-canvas"></canvas>
   <section id="intro" aria-label="About this page">
-    <h1>Which concertina button plays this note?</h1>
+    <h1>Which concertina button plays this note? <span class="beta">Beta</span></h1>
     <p>Play a note on your Anglo C/G concertina and this page shows its pitch and every button that plays it:
        left or right hand, row, button number, and whether you push or pull the bellows.</p>
+    <p>It does not have to be your own playing. Play a tune from YouTube or a recording through your speakers,
+       or let a fellow player show you a phrase, and watch which buttons light up. It works best with one
+       instrument playing one note at a time; chords, accompaniment or a busy session are too much for it.</p>
     <p>Press <b>Start</b> and allow the microphone. The sound is analysed in your browser and never leaves your device.
        Buttons light up in blue for push and red for pull; buttons 1 and 2 (nearest the player) light up brightest.
        Use <b>Threshold</b> to ignore background noise.</p>
     <p>To find the easiest fingering for a whole tune, use the <a href="concertina.html">Concertina Fingering Tool</a>.</p>
+    <p class="beta-note"><b>Beta:</b> Listen is still being improved. Now and then it may show a wrong note,
+       especially with background noise or a fast run of notes.</p>
   </section>
 </div>
 
