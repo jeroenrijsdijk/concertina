@@ -12,10 +12,10 @@
 <meta property="og:url" content="https://jeroenrijsdijk.nl/concertina/concertina.html">
 <meta property="og:image" content="https://jeroenrijsdijk.nl/concertina/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="vendor/fonts/fonts.css?v=dev">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="vendor/abcjs-basic-min.js"></script>
-<link rel="stylesheet" href="style.css">
+<script src="vendor/abcjs-basic-min.js?v=dev"></script>
+<link rel="stylesheet" href="style.css?v=dev">
 <style>
   /* ====================== Analyse view ====================== */
   main.analyse { max-width: 1280px; margin: 0 auto; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
@@ -373,12 +373,16 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
   <div id="fs-scroll"><canvas id="fs-canvas"></canvas></div>
 </div>
 
-<script src="keys.js"></script>
+<script src="keys.js?v=dev"></script>
 <script>
 // keys.js and vendor/abcjs-basic-min.js must sit next to this file
 {
   const missing = [];
   if (typeof KEYS_DATA === "undefined") missing.push("keys.js");
+  else if (typeof hasStoredLayout !== "function") {        // an old keys.js from the browser cache
+    document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif">Your browser still has an older version of this tool. Please reload the page (Ctrl+F5, or hold the reload button).</p>';
+    throw new Error("old keys.js in cache");
+  }
   if (typeof ABCJS === "undefined")     missing.push("vendor/abcjs-basic-min.js");
   if (missing.length) {
     document.body.innerHTML = '<p style="padding:24px;font-family:monospace">Missing: <b>' + missing.join("</b>, <b>") +
@@ -1439,8 +1443,9 @@ window.addEventListener("resize", () => {
   window.__resizeTimer = setTimeout(() => { if (lastDiagram && mode === "analyse") renderCanvas(...lastDiagram); }, 150);
 });
 run().then(applyHash);
+window.toolReady = true;     // practice.js only attaches itself to a tool that started completely
 </script>
-<script src="pitch.js"></script>
-<script src="practice.js"></script>
+<script src="pitch.js?v=dev"></script>
+<script src="practice.js?v=dev"></script>
 </body>
 </html>

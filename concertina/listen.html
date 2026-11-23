@@ -10,9 +10,9 @@
 <meta property="og:url" content="https://jeroenrijsdijk.nl/concertina/listen.html">
 <meta property="og:title" content="Live Pitch – Which Concertina Button Is This Note?">
 <meta property="og:image" content="https://jeroenrijsdijk.nl/concertina/img/og.jpg">
-<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="vendor/fonts/fonts.css?v=dev">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=dev">
 <style>
   :root {
     --bg:       #0c1424;
@@ -314,10 +314,14 @@
   </div>
 </div>
 
-<script src="keys.js"></script>
-<script src="pitch.js"></script>
+<script src="keys.js?v=dev"></script>
+<script src="pitch.js?v=dev"></script>
 <script>
 // keys.js and pitch.js must sit next to this file
+if (typeof KEYS_DATA !== "undefined" && typeof Pitch !== "undefined" && typeof hasStoredLayout !== "function") {
+  document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif;color:#e8edf5">Your browser still has an older version of this page. Please reload it (Ctrl+F5, or hold the reload button).</p>';
+  throw new Error("old keys.js in cache");
+}
 if (typeof KEYS_DATA === "undefined" || typeof Pitch === "undefined") {
   document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js or pitch.js was not found. Keep the files of the concertina folder together.</p>';
   throw new Error("keys.js / pitch.js missing");

@@ -52,7 +52,7 @@ To use your own tune, paste any ABC notation into the text area. Thousands of tu
 
 ## Publishing
 
-`.github/workflows/deploy.yml` runs after every push or merge to `main` (or by hand: *Actions → Deploy website → Run workflow*). It runs `.github/deploy.sh`, which uploads the site with `lftp` over FTP (TLS when the host offers it), FTPS or SFTP. It only uploads and overwrites; nothing on the host is deleted, so other files on the site stay.
+`.github/workflows/deploy.yml` runs after every push or merge to `main` (or by hand: *Actions → Deploy website → Run workflow*). It runs `.github/deploy.sh`, which uploads the site with `lftp` over FTP (TLS when the host offers it), FTPS or SFTP. It only uploads and overwrites; nothing on the host is deleted, so other files on the site stay. The pages ask for their scripts and stylesheets as `keys.js?v=dev`; on upload `dev` becomes the commit, so a browser never mixes a new page with an old script from its cache.
 
 Settings, under *Settings → Secrets and variables → Actions*:
 
