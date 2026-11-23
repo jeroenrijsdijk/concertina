@@ -1,6 +1,6 @@
-// keys.js - the button layout and note helpers shared by concertina.html and listen.html.
-// Keep both pages in the same folder as this file. To change the built-in layout, edit KEYS_DATA below
-// (or upload a JSON layout in concertina.html).
+// keys.js - the button layout and note helpers shared by all pages (tool, practice, listen).
+// Keep the pages in the same folder as this file. To change the built-in layout, edit KEYS_DATA below,
+// or upload a JSON layout in concertina.html: that layout is kept in the browser and used by every page.
 
 // =============================================================================
 //  Concertina button data  (default: My Geuns)
@@ -101,3 +101,73 @@ function midiToHz(midi) {
 function buttonIds() {
   return Object.keys(KEYS_DATA).map(Number).sort((a, b) => a - b);
 }
+
+// =============================================================================
+//  Your own layout
+//  An uploaded layout is checked, kept in the browser (localStorage) and used by
+//  every page, until "Default layout" brings back the built-in one above.
+// =============================================================================
+const LAYOUT_STORE_KEY = "concertina.layout";
+const MAX_BUTTON_ID    = 200;     // ids index the distance matrix, so keep them small
+const DEFAULT_KEYS_DATA = JSON.parse(JSON.stringify(KEYS_DATA));
+let LAYOUT_NAME = DEFAULT_LAYOUT_NAME;
+
+// Returns a description of what is wrong with one button entry, or null when it is usable
+function validateButton(v) {
+  if (!v || typeof v !== "object") return "not an object";
+  const required = ["side", "row", "button", "pushpull", "note"];
+  const missing  = required.filter(f => v[f] === undefined);
+  if (missing.length > 0) return `missing ${missing.join(", ")}`;
+  if (![1, 2].includes(v.side))     return `side must be 1 or 2 (got ${v.side})`;
+  if (![1, 2, 3].includes(v.row))   return `row must be 1, 2 or 3 (got ${v.row})`;
+  if (![1, 2, 3, 4, 5].includes(v.button)) return `button must be 1 to 5 (got ${v.button})`;
+  if (![1, 2].includes(v.pushpull)) return `pushpull must be 1 or 2 (got ${v.pushpull})`;
+  if (noteToMidi(v.note) === null)  return `unknown note "${v.note}" (use e.g. G3, F#2, BB1)`;
+  return null;
+}
+
+// Layout file contents (an object: { name, "1": {...}, "2": {...}, ... }) -> { name, buttons }.
+// Throws an Error that says what is wrong.
+function parseLayout(data, fallbackName) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("This is not a layout file.");
+  const name = String(data.name || fallbackName || "My layout").slice(0, 80);
+  const buttons = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (!/^\d+$/.test(k)) continue;              // "name" and other non-button fields
+    const id = Number(k);
+    if (id < 1 || id > MAX_BUTTON_ID) throw new Error(`Button id ${k}: must be 1 to ${MAX_BUTTON_ID}`);
+    const problem = validateButton(v);
+    if (problem) throw new Error(`Button ${id}: ${problem}`);
+    buttons[id] = { side: v.side, row: v.row, button: v.button, pushpull: v.pushpull, note: v.note };
+  }
+  if (Object.keys(buttons).length === 0) throw new Error("No valid buttons found in this file.");
+  return { name, buttons };
+}
+
+// Use a layout on this page, and keep it for the other pages and the next visit
+function useLayout(name, buttons) {
+  KEYS_DATA   = buttons;
+  LAYOUT_NAME = name;
+  try { localStorage.setItem(LAYOUT_STORE_KEY, JSON.stringify({ name, ...buttons })); } catch (e) { /* no storage: this page only */ }
+}
+
+function useDefaultLayout() {
+  KEYS_DATA   = JSON.parse(JSON.stringify(DEFAULT_KEYS_DATA));
+  LAYOUT_NAME = DEFAULT_LAYOUT_NAME;
+  try { localStorage.removeItem(LAYOUT_STORE_KEY); } catch (e) { /* fine */ }
+}
+
+function hasStoredLayout() { try { return !!localStorage.getItem(LAYOUT_STORE_KEY); } catch (e) { return false; } }
+
+// On every page load: the layout kept from an earlier upload, if it is still valid
+(function restoreLayout() {
+  try {
+    const raw = localStorage.getItem(LAYOUT_STORE_KEY);
+    if (!raw) return;
+    const { name, buttons } = parseLayout(JSON.parse(raw));
+    KEYS_DATA   = buttons;
+    LAYOUT_NAME = name;
+  } catch (e) {
+    try { localStorage.removeItem(LAYOUT_STORE_KEY); } catch (e2) { /* fine */ }   // broken: forget it
+  }
+})();
