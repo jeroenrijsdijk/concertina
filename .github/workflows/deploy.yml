@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install lftp
         run: sudo apt-get update -q && sudo apt-get install -y -q lftp
@@ -30,8 +30,9 @@ jobs:
           DEPLOY_SERVER:     ${{ secrets.DEPLOY_SERVER }}
           DEPLOY_USER:       ${{ secrets.DEPLOY_USER }}
           LFTP_PASSWORD:     ${{ secrets.DEPLOY_PASSWORD }}
-          DEPLOY_DIR:        ${{ vars.DEPLOY_DIR }}
-          DEPLOY_PROTOCOL:   ${{ vars.DEPLOY_PROTOCOL }}
-          DEPLOY_PORT:       ${{ vars.DEPLOY_PORT }}
-          DEPLOY_VERIFY_TLS: ${{ vars.DEPLOY_VERIFY_TLS }}
+          # settings below work as a variable or as a secret, whichever you used
+          DEPLOY_DIR:        ${{ vars.DEPLOY_DIR || secrets.DEPLOY_DIR }}
+          DEPLOY_PROTOCOL:   ${{ vars.DEPLOY_PROTOCOL || secrets.DEPLOY_PROTOCOL }}
+          DEPLOY_PORT:       ${{ vars.DEPLOY_PORT || secrets.DEPLOY_PORT }}
+          DEPLOY_VERIFY_TLS: ${{ vars.DEPLOY_VERIFY_TLS || secrets.DEPLOY_VERIFY_TLS }}
         run: bash .github/deploy.sh
