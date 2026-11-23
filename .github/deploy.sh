@@ -11,7 +11,8 @@
 #    secrets    DEPLOY_SERVER     host name, e.g. ftp.example.nl
 #               DEPLOY_USER       login name
 #               DEPLOY_PASSWORD   password
-#    variables  DEPLOY_DIR        folder of the website on the host, e.g. /public_html
+#    variables  (may also be secrets)
+#               DEPLOY_DIR        folder of the website on the host, e.g. /public_html
 #               DEPLOY_PROTOCOL   ftp (default; uses TLS when the host offers it), ftps or sftp
 #               DEPLOY_PORT       only if the host uses a non-standard port
 #               DEPLOY_VERIFY_TLS no = accept a certificate that does not match the host name
@@ -26,6 +27,7 @@ set -euo pipefail
 PROTO="${DEPLOY_PROTOCOL:-ftp}"
 case "$PROTO" in ftp|ftps|sftp) ;; *) echo "DEPLOY_PROTOCOL must be ftp, ftps or sftp (got: $PROTO)"; exit 1 ;; esac
 VERIFY="${DEPLOY_VERIFY_TLS:-yes}"
+case "$(echo "$VERIFY" | tr "[:upper:]" "[:lower:]" | tr -d " ")" in no|false|0|off) VERIFY=no ;; *) VERIFY=yes ;; esac
 URL="$PROTO://$DEPLOY_SERVER${DEPLOY_PORT:+:$DEPLOY_PORT}"
 
 # If the host's TLS certificate is for another name (common on shared hosting), say which
