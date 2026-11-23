@@ -28,9 +28,26 @@ case "$PROTO" in ftp|ftps|sftp) ;; *) echo "DEPLOY_PROTOCOL must be ftp, ftps or
 VERIFY="${DEPLOY_VERIFY_TLS:-yes}"
 URL="$PROTO://$DEPLOY_SERVER${DEPLOY_PORT:+:$DEPLOY_PORT}"
 
+# If the host's TLS certificate is for another name (common on shared hosting), say which
+# names it is for, so DEPLOY_SERVER can be set to one of them and verification can stay on.
+explain_certificate() {
+  [ "$PROTO" = sftp ] && return 0
+  local port="${DEPLOY_PORT:-21}" opt="-starttls ftp"
+  [ "$PROTO" = ftps ] && { port="${DEPLOY_PORT:-990}"; opt=""; }
+  local cert
+  cert=$(openssl s_client -connect "$DEPLOY_SERVER:$port" $opt -servername "$DEPLOY_SERVER" </dev/null 2>/dev/null \
+         | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null) || return 0
+  [ -n "$cert" ] || return 0
+  echo
+  echo "The host's certificate is issued for these names:"
+  echo "$cert" | sed -n 's/^subject=.*CN *= *\([^,]*\).*/  \1/p; s/^ *DNS:/  /p' | tr ',' '\n' | sed 's/^ *DNS://; s/^ */  /' | sort -u
+  echo "Fix: set the secret DEPLOY_SERVER to one of these names (keeps the check),"
+  echo "     or set the variable DEPLOY_VERIFY_TLS to no (still encrypted, host not checked)."
+}
+
 echo "Uploading to $URL$DEPLOY_DIR"
 # The password comes from the environment (LFTP_PASSWORD), never from the command line
-lftp -c "
+if ! lftp -c "
 set cmd:fail-exit yes
 set net:max-retries 2
 set net:timeout 30
@@ -42,5 +59,8 @@ mirror --reverse --no-perms --parallel=4 --verbose \
   --exclude-glob .git/ --exclude-glob .github/ \
   --exclude-glob README.md --exclude-glob LICENSE --exclude-glob CNAME \
   ./ \"$DEPLOY_DIR\"
-"
+"; then
+  [ "$VERIFY" = yes ] && explain_certificate
+  exit 1
+fi
 echo "Done."
