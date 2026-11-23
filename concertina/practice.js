@@ -20,6 +20,7 @@
     renderSheet("p-notation", document.getElementById("p-sheet"), true);
   });
   onHook("cursor", () => { if (mode === "practice") draw(); });
+  onHook("loop",   () => { if (mode === "practice") draw(); });
   onHook("mode",   m  => { if (m === "practice") { draw(); markSheets(cursor); } });
 
   // Redraw the canvases whenever a card changes size (rotation, window resize)
@@ -31,8 +32,9 @@
   function draw() {
     if (!analysis || !playback) return;
     const ev = playback.events;
+    const lp = loop ? ` · loop ${ev[loop.a].routePos + 1}–${ev[loop.b].routePos + 1}` : "";
     document.getElementById("p-pos").textContent =
-      ev[cursor] ? `${ev[cursor].routePos + 1} / ${playback.routeLength}` : "";
+      ev[cursor] ? `${ev[cursor].routePos + 1} / ${playback.routeLength}${lp}` : "";
     CARDS.forEach((card, n) => fillCard(card, ev[cursor + n], n === 0 ? ev[cursor - 1] : null));
   }
 
@@ -205,7 +207,8 @@
     show(note, match);
     if (!match || !f.armed) return;
     f.armed = false;
-    if (cursor < ev.length - 1) stepCursor(1);
+    if (loop && cursor === loop.b) setCursor(loop.a);       // round and round
+    else if (cursor < ev.length - 1) stepCursor(1);
     else { stop("✓ End of the tune"); setCursor(0); }
   }
 
@@ -233,4 +236,36 @@
   onHook("play",     () => stop());                       // the speaker would be heard by the microphone
   onHook("analysed", () => stop());
   onHook("mode",     m  => { if (m !== "practice") stop(); });
+})();
+
+// =============================================================================
+//  Loop a passage: tap 🔁 at the first note, go to the last note, tap again.
+//  Tap once more to stop the loop. Playback (and Follow me) then go round.
+// =============================================================================
+(function () {
+  if (!window.toolReady) return;
+  const btn  = document.getElementById("p-loop");
+  let firstK = null;            // waiting for the last note of the loop
+
+  function show() {
+    const state = loop ? "true" : firstK !== null ? "mixed" : "false";
+    btn.setAttribute("aria-pressed", state);
+    btn.title = loop ? "Stop the loop (L)"
+              : firstK !== null ? "Now go to the last note of the loop and tap again (L)"
+              : "Loop (L): tap at the first note, go to the last note, tap again";
+    const p = document.getElementById("p-heard");
+    if (firstK !== null && !p.textContent) p.textContent = "Loop: go to the last note, then tap 🔁 again";
+    if (firstK === null && /^Loop:/.test(p.textContent)) p.textContent = "";
+  }
+
+  window.loopButton = function () {
+    if (!playback) return;
+    if (loop)                { clearLoop(); }
+    else if (firstK === null) { firstK = cursor; }
+    else                      { const a = firstK; firstK = null; setLoop(a, cursor); }
+    show();
+  };
+
+  onHook("loop",     () => { if (!loop) firstK = null; show(); });
+  onHook("analysed", () => { firstK = null; show(); });
 })();
