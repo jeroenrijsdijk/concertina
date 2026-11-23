@@ -18,8 +18,9 @@ Results are shown as:
 - a **table** — hand, row, direction (push/pull), and button number for each note
 - a **button diagram** — all 60 buttons visualised per note, colour-coded push (blue) / pull (red)
 - a **downloadable PNG** — the button diagram as an image
-- **playback** — the tune is played as written (durations, rests, repeats, tempo), so you can hear it
-- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home); **Follow me** listens through the microphone and moves on when you play the right note
+- **playback** — the tune is played as written (durations, rests, repeats, tempo) with a reed-like sound, so you can hear it
+- **fingering in the sheet music** — a label like `Lc3` (hand, row, button) under every note, blue for push and red underlined for pull; print it or save it as PDF
+- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home); **Follow me** listens through the microphone and moves on when you play the right note; **loop** a passage (A–B) at any tempo
 
 ## Files
 

@@ -69,6 +69,16 @@
   .abcjs-note.cur-push { filter: drop-shadow(0 0 3px rgba(26,79,168,0.55)); }
   .abcjs-note.cur-pull { filter: drop-shadow(0 0 3px rgba(192,40,26,0.55)); }
   .abcjs-note { cursor: pointer; }
+  .fp-push { fill: var(--push); color: var(--push); }
+  .fp-pull { fill: var(--pull); color: var(--pull); text-decoration: underline; }
+  .abcjs-note.out-loop { opacity: 0.28; }
+
+  .sheet-tools { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .sheet-tools label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text); }
+  .sheet-tools .btn { margin-left: auto; }
+  .finger-legend b { font-family: var(--mono); color: var(--text); }
+  .finger-legend .fp-push, .finger-legend .fp-pull { font-weight: 600; }
+  .print-only { display: none; }
 
   /* Fingering table: scrolls inside its panel, as tall as the diagram next to it */
   .table-panel { position: relative; min-height: 320px; }
@@ -156,6 +166,9 @@
   .p-pos { font-family: var(--mono); font-size: 14px; color: var(--muted); min-width: 7ch; text-align: right; margin-left: 10px; padding-left: 12px; border-left: 1px solid var(--border-2); }
 
   .p-sheet { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; padding: 4px 12px; position: relative; }
+  .p-sheet-toggle { position: sticky; top: 4px; float: right; z-index: 1; font-size: 12px; color: var(--muted); background: rgba(255,255,255,0.9);
+                    padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .p-btn[aria-pressed="mixed"] { border-color: var(--ink); border-width: 2px; }
   #p-notation svg { max-width: 100%; height: auto; }
 
   .p-cards { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-height: 0; }
@@ -189,6 +202,19 @@
     body.mode-practice { overflow: auto; }
     .p-cards { grid-template-columns: 1fr 1fr; grid-template-rows: 300px 170px; }
     .p-controls { margin-left: 0; }
+  }
+
+  /* Print / PDF: only the sheet music with its fingering */
+  @media print {
+    @page { margin: 14mm; }
+    body { background: #fff; }
+    .site-header, #view-practice, #fs-overlay, .page-head, .grid-top, .grid-results, .about,
+    .transport, .sheet-tools, #results > section > .panel-title { display: none !important; }
+    main.analyse { padding: 0; max-width: none; }
+    #results > section.panel { border: none; padding: 0; margin: 0 !important; }
+    .print-only { display: block; }
+    .print-foot { font-size: 9pt; color: #444; margin-top: 6mm; }
+    .abcjs-note.out-loop { opacity: 1; }      /* the whole tune, also when a loop is set */
   }
 </style>
 </head>
@@ -257,7 +283,18 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
   <div id="results" class="hidden">
     <section class="panel" style="margin-bottom:16px">
       <div class="panel-title">Sheet music &amp; playback</div>
-      <div id="abc-notation"></div>
+      <div class="sheet-tools">
+        <label><input type="checkbox" class="fingering-toggle" checked onchange="setShowFingering(this.checked)"> Fingering under the notes</label>
+        <span id="finger-legend" class="finger-legend">
+          <b>L</b>/<b>R</b> hand · row <b>t c g</b> · button <b>1–5</b> (1 nearest the player) ·
+          <span class="fp-push">push</span> · <span class="fp-pull">pull</span>
+        </span>
+        <button class="btn secondary small" onclick="printSheet()" title="Print the sheet music with fingering, or save it as PDF">Print / PDF</button>
+      </div>
+      <div id="print-area">
+        <div id="abc-notation"></div>
+        <div class="print-only print-foot">Fingering: L/R hand · row t, c, g · button 1–5 (1 nearest the player) · push in blue · pull in red, underlined · Concertina Fingering Tool, jeroenrijsdijk.nl</div>
+      </div>
       <div class="transport">
         <button class="btn small" id="play-btn" onclick="togglePlay()">▶ Play</button>
         <button class="btn secondary small" onclick="setCursor(0)" title="Back to the start">⏮</button>
@@ -331,6 +368,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       <button class="p-btn step" onclick="stepCursor(-1)" title="Previous note (←)" aria-label="Previous note">‹</button>
       <button class="p-btn play" id="p-play" onclick="togglePlay()" title="Play / pause (space)" aria-label="Play">▶</button>
       <button class="p-btn step" onclick="stepCursor(1)" title="Next note (→)" aria-label="Next note">›</button>
+      <button class="p-btn" id="p-loop" onclick="loopButton()" title="Loop (L): tap at the first note, go to the last note, tap again. Tap once more to stop the loop." aria-label="Loop a passage" aria-pressed="false">🔁</button>
       <button class="p-btn" id="p-follow" onclick="toggleFollow()" title="Follow me (F): listens to your concertina and moves on when you play the right note" aria-label="Follow me" aria-pressed="false">🎤</button>
       <span class="p-heard" id="p-heard" aria-live="polite"></span>
       <label class="p-tempo">Tempo
@@ -341,7 +379,10 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
     </div>
   </div>
 
-  <div class="p-sheet" id="p-sheet"><div id="p-notation"></div></div>
+  <div class="p-sheet" id="p-sheet">
+    <label class="p-sheet-toggle"><input type="checkbox" class="fingering-toggle" checked onchange="setShowFingering(this.checked)"> Fingering</label>
+    <div id="p-notation"></div>
+  </div>
 
   <div class="p-cards">
     <div class="card current" id="card-0">
@@ -1016,7 +1057,7 @@ let cursor   = 0;
 let mode     = "analyse";
 
 // Tiny event hub, so the practice view (practice.js) can follow without tangling the code
-const hooks = { analysed: [], cursor: [], mode: [], play: [] };
+const hooks = { analysed: [], cursor: [], mode: [], play: [], loop: [] };
 function onHook(name, fn) { hooks[name].push(fn); }
 function emit(name, arg)  { hooks[name].forEach(fn => { try { fn(arg); } catch (e) { console.error(e); } }); }
 
@@ -1043,29 +1084,75 @@ function setCursorToNote(i) {
 const sheets = [];   // { id, els: [svg elements per route position], scroller }
 
 // The note's SVG element per route position, via the source position that abcjs keeps
-function noteElements(visualObj) {
+function noteElements(visualObj, starts) {
   return analysis.route.map((_, i) => {
-    const n  = analysis.tune.notes[analysis.indices[i]];
-    const el = visualObj.getElementFromChar(n.startChar);
+    const el = visualObj.getElementFromChar(starts[i]);
     return (el && el.abselem && el.abselem.elemset) ? el.abselem.elemset : [];
   });
 }
 
 // hideHeader: the practice view shows title and rhythm itself. Those header lines are turned
 // into comments of the same length, so every note keeps its source position (startChar).
+// ---------- Fingering under the notes ----------
+// Every fingered note gets an ABC annotation "_Lc3" (hand, row, button) right before it in
+// the source. That shifts the source positions, so the new position of each note is kept:
+// the highlight and the click on a note keep working.
+const FINGER_KEY = "concertina.fingering";
+let showFingering = true;
+try { showFingering = localStorage.getItem(FINGER_KEY) !== "off"; } catch (e) { /* default: on */ }
+
+const ROW_NAME = ["", "t", "c", "g"];
+function fingerLabel(id) {
+  const k = KEYS_DATA[id];
+  return (k.side === 1 ? "L" : "R") + (ROW_NAME[k.row] || k.row) + k.button;
+}
+
+// -> { text, starts: source position of each route note in that text }
+function sheetSource(hideHeader, fingering) {
+  // The practice view shows title and rhythm itself; those lines become comments of the same length
+  let text = hideHeader ? analysis.text.replace(/^[TR]:.*$/gm, line => "%" + line.slice(1)) : analysis.text;
+  const starts = analysis.route.map((_, i) => analysis.tune.notes[analysis.indices[i]].startChar);
+  if (!fingering) return { text, starts };
+  const order = starts.map((s, i) => [s, i]).sort((a, b) => a[0] - b[0]);
+  const moved = [];
+  let out = "", last = 0;
+  for (const [s, i] of order) {
+    out += text.slice(last, s) + `"_${fingerLabel(analysis.route[i])}"`;
+    moved[i] = out.length;
+    last = s;
+  }
+  return { text: out + text.slice(last), starts: moved };
+}
+
+function setShowFingering(on) {
+  showFingering = on;
+  try { localStorage.setItem(FINGER_KEY, on ? "on" : "off"); } catch (e) { /* fine */ }
+  document.querySelectorAll(".fingering-toggle").forEach(el => { el.checked = on; });
+  document.getElementById("finger-legend").classList.toggle("hidden", !on);
+  if (analysis) sheets.forEach(sh => renderSheet(sh.id, sh.scroller, sh.hideHeader));
+}
+
 function renderSheet(divId, scroller, hideHeader) {
-  const text = hideHeader ? analysis.text.replace(/^[TR]:.*$/gm, line => "%" + line.slice(1)) : analysis.text;
-  const charToPos = new Map(analysis.route.map((_, i) => [analysis.tune.notes[analysis.indices[i]].startChar, i]));
+  const { text, starts } = sheetSource(hideHeader, showFingering);
+  const charToPos = new Map(starts.map((s, i) => [s, i]));
   const vo = ABCJS.renderAbc(divId, text, {
     responsive: "resize",
     add_classes: true,
     selectionColor: "currentColor",          // our own highlight shows the selection
+    format: { annotationfont: "Helvetica 9 bold" },    // small enough for one row of labels under eighth notes
     clickListener: el => { const i = charToPos.get(el.startChar); if (i !== undefined) setCursorToNote(i); },
   })[0];
   const i = sheets.findIndex(s => s.id === divId);
-  const entry = { id: divId, els: vo ? noteElements(vo) : [], scroller, marked: [] };
+  const entry = { id: divId, hideHeader, els: vo ? noteElements(vo, starts) : [], scroller, marked: [] };
   if (i >= 0) sheets[i] = entry; else sheets.push(entry);
+  // colour each fingering label: blue = push, red (underlined, for black-and-white prints) = pull
+  entry.els.forEach((els, p) => {
+    const ann = els[0] && els[0].querySelector(".abcjs-annotation");
+    if (ann && ann.textContent === fingerLabel(analysis.route[p]))
+      ann.classList.add(KEYS_DATA[analysis.route[p]].pushpull === 2 ? "fp-pull" : "fp-push");
+  });
   markSheets(cursor);
+  markLoop();
 }
 
 function markSheets(k) {
@@ -1136,6 +1223,7 @@ const AHEAD_BG    = 1.5;    // ... and in a background tab, where the browser sl
 const TEMPO_MIN   = 10, TEMPO_MAX = 240;
 
 let audioCtx = null;
+let loop     = null;        // { a, b }: play events a..b over and over (indices into playback.events)
 let playback = null;        // { events: [{hz, start, duration, routePos}], beatLength, bpm, routeLength }
 let player   = null;        // while playing: { master, notes, anchorTime, anchorPos, secPerWhole, next, from, timer, raf }
 
@@ -1174,20 +1262,32 @@ function secondsPerWhole() {
 const posAt  = t   => player.anchorPos + (t - player.anchorTime) / player.secPerWhole;
 const timeAt = pos => player.anchorTime + (pos - player.anchorPos) * player.secPerWhole;
 
-// Plan every note that starts before the look-ahead horizon; stop at the end of the tune
+// Plan every note that starts before the look-ahead horizon; stop at the end of the tune.
+// With a loop, after event b comes event a again: player.offset (whole notes) grows by the
+// length of the loop each round, so the musical position keeps running forward.
 function schedule() {
   if (!player) return;
   const ev  = playback.events;
   const now = audioCtx.currentTime;
   const horizon = now + (document.hidden ? AHEAD_BG : AHEAD);
-  while (player.next < ev.length && timeAt(ev[player.next].start) < horizon) {
+  for (;;) {
+    if (loop && player.next > loop.b) {
+      player.offset += ev[loop.b].start + ev[loop.b].duration - ev[loop.a].start;
+      player.next = loop.a;
+    }
+    if (player.next >= ev.length) break;
     const e = ev[player.next];
-    player.notes.push(playNote(player.master, e.hz, timeAt(e.start), e.duration * player.secPerWhole));
+    const when = timeAt(e.start + player.offset);
+    if (when >= horizon) break;
+    const n = playNote(player.master, e.hz, when, e.duration * player.secPerWhole);
+    n.k = player.next;
+    n.offset = player.offset;
+    player.notes.push(n);
     player.next++;
   }
   player.notes = player.notes.filter(n => n.end > now);          // forget notes that are over
   const last = ev[ev.length - 1];
-  if (player.next >= ev.length && now > timeAt(last.start + last.duration) + 0.15) {
+  if (!loop && player.next >= ev.length && now > timeAt(last.start + last.duration + player.offset) + 0.15) {
     stopPlayer();
     setCursor(0);                                                 // the end: ready to play from the start
   }
@@ -1205,7 +1305,10 @@ function retime() {
   const waiting = player.notes.filter(n => n.when > now);
   waiting.forEach(n => { try { n.osc.stop(0); } catch (e) { /* fine */ } });
   player.notes = player.notes.filter(n => n.when <= now);
-  player.next -= waiting.length;                                  // they are planned again, at the new tempo
+  if (waiting.length) {                                           // plan them again, at the new tempo
+    player.next   = waiting[0].k;
+    player.offset = waiting[0].offset;
+  }
   schedule();
 }
 
@@ -1225,14 +1328,15 @@ function stopPlayer() {
   document.getElementById("player-status").textContent = "";
 }
 
-// Follows the audio clock: moves the cursor to the note that is sounding now
+// Follows the audio clock: the cursor is the latest planned note that has started
+// (in a rest the previous note stays marked)
 function followPlayer() {
   if (!player) return;
   const ev  = playback.events;
-  const pos = posAt(audioCtx.currentTime);
-  let k = player.from;
-  while (k + 1 < ev.length && ev[k + 1].start <= pos + 1e-9) k++;
-  player.from = k;                                                // never look back: repeats replay earlier notes
+  const now = audioCtx.currentTime;
+  let k = player.from, latest = -Infinity;
+  for (const n of player.notes) if (n.when <= now + 1e-9 && n.when > latest) { latest = n.when; k = n.k; }
+  player.from = k;
   document.getElementById("player-status").textContent = `♩ ${ev[k].routePos + 1} / ${playback.routeLength}`;
   if (k !== cursor) { cursor = k; emit("cursor", k); }
   player.raf = requestAnimationFrame(followPlayer);
@@ -1245,10 +1349,11 @@ function togglePlay() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
 
-  const from   = Math.min(cursor, playback.events.length - 1);
+  let from = Math.min(cursor, playback.events.length - 1);
+  if (loop && (from < loop.a || from > loop.b)) from = loop.a;     // outside the loop: start at its beginning
   const master = audioCtx.createGain();
   master.connect(audioCtx.destination);
-  player = { master, notes: [], from, next: from, raf: 0, timer: 0,
+  player = { master, notes: [], from, next: from, offset: 0, raf: 0, timer: 0,
              anchorTime: audioCtx.currentTime + LEAD_IN, anchorPos: playback.events[from].start,
              secPerWhole: secondsPerWhole() };
   player.timer = setInterval(schedule, TICK_MS);
@@ -1257,6 +1362,27 @@ function togglePlay() {
   setPlayButtons(true);
   followPlayer();
   emit("play");
+}
+
+// ---------- Loop a passage ----------
+// a, b: event indices (inclusive). Takes effect at once, also while playing.
+function setLoop(a, b) {
+  if (!playback) return;
+  loop = { a: Math.min(a, b), b: Math.max(a, b) };
+  if (player) { stopPlayer(); setCursor(loop.a); togglePlay(); }
+  markLoop();
+  emit("loop", loop);
+}
+function clearLoop() {
+  loop = null;
+  markLoop();
+  emit("loop", null);
+}
+// Notes outside the loop fade, in every copy of the sheet music
+function markLoop() {
+  const inside = new Set();
+  if (loop && playback) for (let k = loop.a; k <= loop.b; k++) inside.add(playback.events[k].routePos);
+  for (const sh of sheets) sh.els.forEach((els, p) => els.forEach(el => el.classList.toggle("out-loop", !!loop && !inside.has(p))));
 }
 
 // One tempo for both views: every .tempo-input and .tempo-out follows the last change.
@@ -1285,6 +1411,8 @@ function buildPlayback(tune, route, indices) {
 function renderNotation() {
   stopPlayer();
   cursor = 0;
+  loop = null;
+  emit("loop", null);
   playback = buildPlayback(analysis.tune, analysis.route, analysis.indices);
   renderSheet("abc-notation", null);
 
@@ -1292,6 +1420,15 @@ function renderNotation() {
   const slider = document.getElementById("tempo-slider");
   setTempo(Math.min(Math.max(Math.round(playback.bpm) || 120, +slider.min), +slider.max));
 }
+
+// Print or save as PDF: the sheet music with fingering, without the cursor mark
+function printSheet() {
+  if (!analysis) return;
+  if (!showFingering) setShowFingering(true);
+  sheets.forEach(sh => sh.marked.forEach(el => el.classList.remove("cur-push", "cur-pull")));
+  window.print();
+}
+window.addEventListener("afterprint", () => { if (analysis) markSheets(cursor); });
 
 // =============================================================================
 //  Analyse
@@ -1400,6 +1537,7 @@ document.addEventListener("keydown", e => {
     "ArrowLeft": () => stepCursor(-1), "PageUp": () => stepCursor(-1),
     "Home": () => setCursor(0),
     "f": () => { if (window.toggleFollow) toggleFollow(); },
+    "l": () => { if (window.loopButton) loopButton(); },
   };
   const act = actions[e.key];
   if (!act) return;
@@ -1437,6 +1575,8 @@ function closeFullscreen() {
 // =============================================================================
 try { const saved = localStorage.getItem(STORE_KEY); if (saved) document.getElementById("abc-input").value = saved; } catch (e) { /* no storage */ }
 document.getElementById("layout-name").textContent = LAYOUT_NAME;      // keys.js may have restored an uploaded layout
+document.querySelectorAll(".fingering-toggle").forEach(el => { el.checked = showFingering; });
+document.getElementById("finger-legend").classList.toggle("hidden", !showFingering);
 document.getElementById("layout-default").classList.toggle("hidden", !hasStoredLayout());
 window.addEventListener("hashchange", applyHash);
 window.addEventListener("resize", () => {
