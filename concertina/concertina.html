@@ -147,6 +147,11 @@
   .p-tempo { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin-left: 8px; }
   .p-tempo input { width: 140px; height: 32px; }
   .p-tempo output { font-family: var(--mono); color: var(--text); min-width: 3ch; }
+  .p-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); box-shadow: 0 0 0 3px var(--push-soft); }
+  .p-heard { font-family: var(--mono); font-size: 14px; color: var(--muted); min-width: 0; }
+  .p-heard:empty { display: none; }
+  .p-heard b { font-size: 18px; padding: 2px 8px; border-radius: 5px; background: var(--surface); color: var(--text); }
+  .p-heard.match b { background: #e3f1e6; color: var(--ok); }
   .p-pos { font-family: var(--mono); font-size: 14px; color: var(--muted); min-width: 7ch; text-align: right; margin-left: 10px; padding-left: 12px; border-left: 1px solid var(--border-2); }
 
   .p-sheet { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; padding: 4px 12px; position: relative; }
@@ -237,6 +242,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       <div>
         <div class="layout-line">
           Layout <b id="layout-name">My Geuns</b>
+          <button class="btn secondary small hidden" id="layout-default" onclick="resetLayout()" title="Back to the built-in layout">Default</button>
           <button class="btn secondary small" onclick="downloadLayout()">Template</button>
           <label class="btn secondary small">Upload
             <input type="file" id="layout-upload" accept=".json" onchange="uploadLayout(event)" hidden>
@@ -305,7 +311,7 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       <li>Copy a tune in ABC notation, for example from <a href="https://thesession.org">The Session</a> or <a href="https://abcnotation.com">abcnotation.com</a>, and paste it into the ABC notation box.</li>
       <li>Press <b>Analyse</b>. The table shows the hand, row, button number and bellows direction (push or pull) for every note; the diagram shows the buttons and good alternatives.</li>
       <li>Press <b>Play</b> to hear the tune as written, with note lengths, rests and repeats. Click a note or a table row to start from there.</li>
-      <li>Open the <a href="#practice">Practice view</a> on a tablet: sheet music, the current note large in blue (push) or red (pull), and the next two notes.</li>
+      <li>Open the <a href="#practice">Practice view</a> on a tablet: sheet music, the current note large in blue (push) or red (pull), and the next two notes. Press 🎤 <b>Follow me</b> and it moves on when you play the right note.</li>
     </ol>
     <p>The tool is free, runs entirely in your browser and uploads nothing. If your instrument differs, download the layout template, edit it and upload your own layout.
        More in the <a href="help.html">help and manual</a>, including the full C/G button map.</p>
@@ -324,6 +330,8 @@ GAG GAB|ABA ABd|egd edB|dBAA2B:|</textarea>
       <button class="p-btn step" onclick="stepCursor(-1)" title="Previous note (←)" aria-label="Previous note">‹</button>
       <button class="p-btn play" id="p-play" onclick="togglePlay()" title="Play / pause (space)" aria-label="Play">▶</button>
       <button class="p-btn step" onclick="stepCursor(1)" title="Next note (→)" aria-label="Next note">›</button>
+      <button class="p-btn" id="p-follow" onclick="toggleFollow()" title="Follow me (F): listens to your concertina and moves on when you play the right note" aria-label="Follow me" aria-pressed="false">🎤</button>
+      <span class="p-heard" id="p-heard" aria-live="polite"></span>
       <label class="p-tempo">Tempo
         <input id="p-tempo" class="tempo-input" type="range" min="10" max="240" value="120">
         <output class="tempo-out">120</output>
@@ -929,21 +937,7 @@ function downloadJson() {
   URL.revokeObjectURL(link.href);
 }
 
-// Returns a description of what is wrong with one button entry, or null when it is usable
-function validateButton(v) {
-  if (!v || typeof v !== "object") return "not an object";
-  const required = ["side", "row", "button", "pushpull", "note"];
-  const missing  = required.filter(f => v[f] === undefined);
-  if (missing.length > 0) return `missing ${missing.join(", ")}`;
-  if (![1, 2].includes(v.side))     return `side must be 1 or 2 (got ${v.side})`;
-  if (![1, 2, 3].includes(v.row))   return `row must be 1, 2 or 3 (got ${v.row})`;
-  if (![1, 2, 3, 4, 5].includes(v.button)) return `button must be 1 to 5 (got ${v.button})`;
-  if (![1, 2].includes(v.pushpull)) return `pushpull must be 1 or 2 (got ${v.pushpull})`;
-  if (noteToMidi(v.note) === null)  return `unknown note "${v.note}" (use e.g. G3, F#2, BB1)`;
-  return null;
-}
-
-const MAX_BUTTON_ID = 200;   // ids index the distance matrix, so keep them small
+// validateButton, parseLayout, useLayout and useDefaultLayout are in keys.js (shared with the other pages)
 
 function uploadLayout(event) {
   const file = event.target.files[0];
@@ -952,33 +946,10 @@ function uploadLayout(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
-      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("This is not a layout file.");
-      const name = String(data.name || file.name.replace(/\.json$/i, "")).slice(0, 80);
-
-      // Extract button entries (integer keys only)
-      const buttons = {};
-      for (const [k, v] of Object.entries(data)) {
-        if (!/^\d+$/.test(k)) continue;              // "name" and other non-button fields
-        const id = Number(k);
-        if (id < 1 || id > MAX_BUTTON_ID) throw new Error(`Button id ${k}: must be 1 to ${MAX_BUTTON_ID}`);
-
-        const problem = validateButton(v);
-        if (problem) throw new Error(`Button ${id}: ${problem}`);
-        buttons[id] = { side: v.side, row: v.row, button: v.button, pushpull: v.pushpull, note: v.note };
-      }
-
-      if (Object.keys(buttons).length === 0) {
-        throw new Error("No valid buttons found in this file.");
-      }
-
-      // Apply new layout
-      KEYS_DATA  = buttons;
-      distmat    = null;  // force rebuild
-      noteKeys   = null;
-
-      document.getElementById("layout-name").textContent = name;
-      setLayoutStatus(`✓ Loaded "${name}" — ${Object.keys(buttons).length} buttons.`, "ok");
+      const { name, buttons } = parseLayout(JSON.parse(e.target.result), file.name.replace(/\.json$/i, ""));
+      useLayout(name, buttons);          // kept in the browser: the practice view and the Listen page use it too
+      layoutChanged();
+      setLayoutStatus(`✓ Loaded "${name}" — ${Object.keys(buttons).length} buttons. Used on every page until you choose Default.`, "ok");
 
       // Reset file input so same file can be re-uploaded
       event.target.value = "";
@@ -989,6 +960,21 @@ function uploadLayout(event) {
     }
   };
   reader.readAsText(file);
+}
+
+function resetLayout() {
+  useDefaultLayout();
+  layoutChanged();
+  setLayoutStatus(`✓ Back to the built-in layout "${LAYOUT_NAME}".`, "ok");
+}
+
+// After a layout change: rebuild the lookup tables, show the name, analyse again
+function layoutChanged() {
+  distmat  = null;
+  noteKeys = null;
+  document.getElementById("layout-name").textContent = LAYOUT_NAME;
+  document.getElementById("layout-default").classList.toggle("hidden", !hasStoredLayout());
+  if (analysis) run();
 }
 
 function setLayoutStatus(msg, cls) {
@@ -1025,7 +1011,7 @@ let cursor   = 0;
 let mode     = "analyse";
 
 // Tiny event hub, so the practice view (practice.js) can follow without tangling the code
-const hooks = { analysed: [], cursor: [], mode: [] };
+const hooks = { analysed: [], cursor: [], mode: [], play: [] };
 function onHook(name, fn) { hooks[name].push(fn); }
 function emit(name, arg)  { hooks[name].forEach(fn => { try { fn(arg); } catch (e) { console.error(e); } }); }
 
@@ -1120,9 +1106,24 @@ onHook("cursor", k => { markSheets(k); markTable(k); });
 //  replans the notes that have not started yet. Plays from the cursor, as
 //  written: real durations, rests and repeats (from tune.timeline).
 // =============================================================================
-const NOTE_PEAK   = 0.35;   // loudness of one note
-const NOTE_ATTACK = 0.01;   // seconds of fade-in; avoids a click at the start of each note
-const NOTE_GAP    = 0.04;   // seconds of silence at the end of a note (so repeated notes are heard apart)
+const NOTE_PEAK    = 0.25;  // loudness of one note at its start
+const NOTE_SUSTAIN = 0.8;   // ... and the level it settles to: a reed keeps sounding while the bellows move
+const NOTE_ATTACK  = 0.02;  // seconds of fade-in, like a reed speaking; avoids a click
+const NOTE_RELEASE = 0.015; // time constant of the fade-out at the end of a note
+const NOTE_GAP     = 0.04;  // seconds of silence at the end of a note (so repeated notes are heard apart)
+
+// The sound of a free reed: a rich spectrum in which the 2nd and 3rd harmonics are
+// stronger than the fundamental (as measured for accordion and concertina reeds),
+// instead of a plain triangle wave. One waveform, shared by all notes.
+const REED_HARMONICS = [0, 0.55, 1.0, 0.75, 0.5, 0.38, 0.3, 0.22, 0.17, 0.13, 0.1, 0.08, 0.06, 0.05, 0.04];
+let reedWave = null;
+function reedWaveFor(ctx) {
+  if (!reedWave || reedWave.ctx !== ctx) {
+    const imag = new Float32Array(REED_HARMONICS.length);              // sine phases
+    reedWave = { ctx, wave: ctx.createPeriodicWave(new Float32Array(REED_HARMONICS), imag) };
+  }
+  return reedWave.wave;
+}
 const LEAD_IN     = 0.10;   // seconds between pressing Play and the first note
 const TICK_MS     = 25;     // how often the scheduler looks ahead
 const AHEAD       = 0.25;   // seconds of notes planned ahead ...
@@ -1136,19 +1137,19 @@ let player   = null;        // while playing: { master, notes, anchorTime, ancho
 function playNote(dest, hz, when, length) {
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  osc.type = "triangle";
+  osc.setPeriodicWave(reedWaveFor(audioCtx));
   osc.frequency.value = hz;
   osc.connect(gain);
   gain.connect(dest);
 
-  const end = when + Math.max(length - NOTE_GAP, 0.03);
+  const end = when + Math.max(length - NOTE_GAP, NOTE_ATTACK + 0.02);
   gain.gain.setValueAtTime(0, when);
   gain.gain.linearRampToValueAtTime(NOTE_PEAK, when + NOTE_ATTACK);
-  gain.gain.exponentialRampToValueAtTime(0.001, end);      // decays over the note
-  gain.gain.linearRampToValueAtTime(0, end + 0.02);        // an exponential ramp never reaches 0
+  gain.gain.setTargetAtTime(NOTE_PEAK * NOTE_SUSTAIN, when + NOTE_ATTACK, 0.08);   // settles, then holds
+  gain.gain.setTargetAtTime(0, end, NOTE_RELEASE);                                  // reed stops: short fade
   osc.start(when);
-  osc.stop(end + 0.03);
-  return { osc, when, end: end + 0.03 };
+  osc.stop(end + NOTE_RELEASE * 8);
+  return { osc, when, end: end + NOTE_RELEASE * 8 };
 }
 
 function setPlayButtons(playing) {
@@ -1250,6 +1251,7 @@ function togglePlay() {
 
   setPlayButtons(true);
   followPlayer();
+  emit("play");
 }
 
 // One tempo for both views: every .tempo-input and .tempo-out follows the last change.
@@ -1392,6 +1394,7 @@ document.addEventListener("keydown", e => {
     "ArrowRight": () => stepCursor(1), "PageDown": () => stepCursor(1),
     "ArrowLeft": () => stepCursor(-1), "PageUp": () => stepCursor(-1),
     "Home": () => setCursor(0),
+    "f": () => { if (window.toggleFollow) toggleFollow(); },
   };
   const act = actions[e.key];
   if (!act) return;
@@ -1428,6 +1431,8 @@ function closeFullscreen() {
 //  Start: restore the last tune, analyse it, open the view the address asks for
 // =============================================================================
 try { const saved = localStorage.getItem(STORE_KEY); if (saved) document.getElementById("abc-input").value = saved; } catch (e) { /* no storage */ }
+document.getElementById("layout-name").textContent = LAYOUT_NAME;      // keys.js may have restored an uploaded layout
+document.getElementById("layout-default").classList.toggle("hidden", !hasStoredLayout());
 window.addEventListener("hashchange", applyHash);
 window.addEventListener("resize", () => {
   clearTimeout(window.__resizeTimer);
@@ -1435,6 +1440,7 @@ window.addEventListener("resize", () => {
 });
 run().then(applyHash);
 </script>
+<script src="pitch.js"></script>
 <script src="practice.js"></script>
 </body>
 </html>

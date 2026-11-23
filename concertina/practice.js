@@ -150,3 +150,87 @@
     }
   }
 })();
+
+// =============================================================================
+//  Follow mode: the microphone listens, and the cursor moves on when you play
+//  the note that is due. Uses pitch.js (the same detection as the Listen page).
+//  A repeated note (A A) needs a new attack: the sound has to stop or dip first,
+//  so holding one note never counts twice.
+// =============================================================================
+(function () {
+  if (typeof onHook !== "function" || typeof Pitch === "undefined") return;
+
+  const btn   = document.getElementById("p-follow");
+  const heard = document.getElementById("p-heard");
+  const DIP   = 0.45;          // level drop (of the recent peak) that counts as a new attack
+  let follow  = null;          // { mic, armed, last, peak }
+
+  function show(note, match, text) {
+    heard.classList.toggle("match", !!match);
+    heard.innerHTML = "";
+    if (text) { heard.textContent = text; return; }
+    if (!note) return;
+    const b = document.createElement("b");
+    b.textContent = (match ? "✓ " : "") + note;
+    heard.append("🎤 ", b);
+  }
+
+  function setUI(on, text) {
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.setAttribute("aria-label", on ? "Stop following" : "Follow me");
+    show(null, false, text);
+  }
+
+  function stop(text) {
+    if (!follow) return;
+    follow.mic.stop();
+    follow = null;
+    setUI(false, text || "");
+  }
+
+  function onLevel(f, rms) {
+    f.peak = Math.max(rms, f.peak * 0.9);
+    if (rms < f.peak * DIP) f.armed = true;
+  }
+
+  function onNote(f, note) {
+    if (follow !== f || !playback) return;
+    if (note === null) { f.armed = true; f.last = null; show(null); return; }
+    if (note !== f.last) f.armed = true;                 // a different note is always a new note
+    f.last = note;
+
+    const ev = playback.events;
+    const expected = KEYS_DATA[analysis.route[ev[cursor].routePos]].note;
+    const match = noteToMidi(note) === noteToMidi(expected);
+    show(note, match);
+    if (!match || !f.armed) return;
+    f.armed = false;
+    if (cursor < ev.length - 1) stepCursor(1);
+    else { stop("✓ End of the tune"); setCursor(0); }
+  }
+
+  window.toggleFollow = async function () {
+    if (follow) { stop(); return; }
+    if (!playback || !playback.events.length) return;
+    if (player) stopPlayer();
+    const f = { armed: true, last: null, peak: 0 };
+    f.mic = Pitch.createListener({
+      holdFrames: 2,                                      // let go quickly: a pause is a new attack
+      smoothing: 0.5,                                     // react faster than the Listen page
+      onNote:  note => onNote(f, note),
+      onLevel: rms  => onLevel(f, rms),
+    });
+    follow = f;
+    setUI(true, "Listening… play the marked note");
+    try {
+      await f.mic.start();
+    } catch (e) {
+      follow = null;
+      setUI(false, e.message);
+    }
+  };
+
+  onHook("play",     () => stop());                       // the speaker would be heard by the microphone
+  onHook("analysed", () => stop());
+  onHook("mode",     m  => { if (m !== "practice") stop(); });
+})();

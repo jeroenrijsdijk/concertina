@@ -19,7 +19,7 @@ Results are shown as:
 - a **button diagram** — all 60 buttons visualised per note, colour-coded push (blue) / pull (red)
 - a **downloadable PNG** — the button diagram as an image
 - **playback** — the tune is played as written (durations, rests, repeats, tempo), so you can hear it
-- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home)
+- a **practice view** — for a tablet on a music stand: the sheet music with the current note marked, that note's button large (blue = push, red = pull) and the next two notes, with play/pause, step and tempo; works with a keyboard or a page-turner pedal (space, arrows, Page Up/Down, Home); **Follow me** listens through the microphone and moves on when you play the right note
 
 ## Files
 
@@ -33,8 +33,9 @@ The repository is the whole website [jeroenrijsdijk.nl](https://jeroenrijsdijk.n
 | `concertina/concertina.html` | The web tool: Analyse view and Practice view (`#practice`) |
 | `concertina/practice.js` | The practice view; follows the cursor of `concertina.html` |
 | `concertina/listen.html` | Live pitch detection from the microphone |
+| `concertina/pitch.js` | Microphone → note of the instrument (fundamental, not the loudest harmonic); used by Listen and by the practice view's Follow me |
 | `concertina/help.html` | Help page and manual |
-| `concertina/keys.js` | The button layout (`KEYS_DATA`) and note helpers, shared by the pages |
+| `concertina/keys.js` | The button layout (`KEYS_DATA`), note helpers, and your own uploaded layout (checked and kept in the browser for every page) |
 | `concertina/style.css` | Shared look of all pages (colours, header, buttons) |
 | `concertina/vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
 | `concertina/vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |

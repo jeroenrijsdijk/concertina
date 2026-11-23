@@ -315,57 +315,18 @@
 </div>
 
 <script src="keys.js"></script>
+<script src="pitch.js"></script>
 <script>
-// keys.js must sit next to this file (it holds KEYS_DATA and the note helpers)
-if (typeof KEYS_DATA === "undefined") {
-  document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js was not found. Put <b>keys.js</b> in the same folder as this page.</p>';
-  throw new Error("keys.js missing");
+// keys.js and pitch.js must sit next to this file
+if (typeof KEYS_DATA === "undefined" || typeof Pitch === "undefined") {
+  document.body.innerHTML = '<p style="padding:24px;font-family:monospace">keys.js or pitch.js was not found. Keep the files of the concertina folder together.</p>';
+  throw new Error("keys.js / pitch.js missing");
 }
 
 const ACCENT = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#dfe6f2";
 
-// =============================================================================
-//  Note frequency table
-//  Irish notation: octave labels are 2 below standard scientific pitch.
-//  C3 (Irish) = C5 (standard) = 523 Hz. Screen always shows Irish labels.
-//  noteToMidi() (keys.js) applies the +2 octave shift for the Hz calculation only.
-// =============================================================================
-function noteToHz(noteName) {
-  const midi = noteToMidi(noteName);
-  return midi === null ? null : midiToHz(midi);
-}
-
-// Build note → button ids map, and Hz lookup table
-const NOTE_BUTTONS = {};
-const BUTTON_HZ    = {};
-
-for (const id of buttonIds()) {
-  const note = KEYS_DATA[id].note;
-  const hz   = noteToHz(note);
-  BUTTON_HZ[id] = hz;
-  if (!NOTE_BUTTONS[note]) NOTE_BUTTONS[note] = [];
-  if (!NOTE_BUTTONS[note].includes(id)) NOTE_BUTTONS[note].push(id);
-}
-
-// Sorted [hz, note] pairs — all entries are in the audible instrument range
-const HZ_TABLE = Object.entries(NOTE_BUTTONS)
-  .map(([note]) => ({ note, hz: noteToHz(note) }))
-  .filter(x => x.hz && x.hz > 80)
-  .sort((a, b) => a.hz - b.hz);
-
-// Instrument range derived from table
-const HZ_MIN = HZ_TABLE[0].hz * 0.92;
-const HZ_MAX = HZ_TABLE[HZ_TABLE.length - 1].hz * 1.08;
-
-function hzToNote(hz) {
-  if (!hz || hz < HZ_MIN || hz > HZ_MAX) return null;
-  let best = null, bestDist = Infinity;
-  for (const entry of HZ_TABLE) {
-    const cents = Math.abs(1200 * Math.log2(hz / entry.hz));
-    if (cents < bestDist) { bestDist = cents; best = entry; }
-  }
-  return bestDist < 60 ? best : null;   // 60 cents = just over a quarter tone
-}
+// Notes and pitch detection are in pitch.js (shared with the practice view's follow mode);
+// the layout is the one keys.js restored, so an uploaded layout is used here too.
 
 // =============================================================================
 //  Physical buttons  (30 entries: one per physical key position)
@@ -588,7 +549,7 @@ function drawWaveform() {
   wfCtx.stroke();
   wfCtx.setLineDash([]);
 
-  if (!isRunning) {
+  if (!mic.running) {
     wfCtx.fillStyle = "#1f2c48";
     wfCtx.font      = "10px 'Source Code Pro', monospace";
     wfCtx.textAlign = "center";
@@ -602,9 +563,9 @@ function drawWaveform() {
   const scale = mid * 0.9;
 
   // Colour: accent if above threshold, muted if below
-  let rms = 0;
-  for (let i = 0; i < timeBuf.length; i++) rms += timeBuf[i] * timeBuf[i];
-  rms = Math.sqrt(rms / timeBuf.length);
+  let rms = 0;                                     // same window as the detector: the newest 4096 samples
+  for (let i = timeBuf.length - 4096; i < timeBuf.length; i++) rms += timeBuf[i] * timeBuf[i];
+  rms = Math.sqrt(rms / 4096);
   const aboveThresh = rms >= threshold;
 
   wfCtx.beginPath();
@@ -664,210 +625,48 @@ function animationLoop() {
 }
 
 // =============================================================================
-//  Pitch detection  (loudest peak, then a check for the true fundamental below it)
+//  Microphone -> note (pitch.js)
 // =============================================================================
-let audioCtx = null, analyser = null, micStream = null;
-let isRunning = false;
-
-const BUFFER_SIZE = 8192;
-const timeBuf     = new Float32Array(BUFFER_SIZE);
-// NOTE: actual sample rate is read from audioCtx.sampleRate at runtime,
-// not hardcoded — browsers commonly use 44100 or 48000 Hz.
-
-// Filter state
-const REQUIRED_HITS = 3;
-const HOLD_FRAMES   = 8;
-let candidate      = null;
-let candidateCount = 0;
-let holdNote       = null;
-let holdCountdown  = 0;
-
-function detectPitch() {
-  if (!isRunning) return;
-  analyser.getFloatTimeDomainData(timeBuf);
-
-  // RMS volume
-  let sum = 0;
-  for (let i = 0; i < BUFFER_SIZE; i++) sum += timeBuf[i] * timeBuf[i];
-  const rms       = Math.sqrt(sum / BUFFER_SIZE);
-  const threshold = parseInt(document.getElementById("thresh-slider").value) / 1000;
-
-  document.getElementById("vol-bar").style.height = Math.min(100, rms / 0.1 * 100) + "%";
-
-  if (rms < threshold) {
-    candidate      = null;
-    candidateCount = 0;
-    if (holdCountdown > 0) {
-      holdCountdown--;
-    } else {
-      holdNote   = null;
-      activeNote = null;
-      document.getElementById("note-name").textContent = "–";
-      document.getElementById("note-name").style.color = "var(--text)";
-      document.getElementById("note-freq").textContent = "";
-      updateNoteDisplay(null);
-    }
-    setTimeout(detectPitch, 30);
-    return;
-  }
-
-  const result = detectFFTPeak();
-
-  if (result && result.clarity > 8) {   // 8 dB above mean = clear tone
-    const match = hzToNote(result.hz);
-
-    if (match) {
-      if (match.note === candidate) {
-        candidateCount++;
-      } else {
-        candidate      = match.note;
-        candidateCount = 1;
-      }
-
-      if (candidateCount >= REQUIRED_HITS) {
-        holdNote      = match.note;
-        holdCountdown = HOLD_FRAMES;
-        activeNote    = match.note;
-        document.getElementById("note-name").textContent = match.note;
-        document.getElementById("note-name").style.color = "var(--accent)";
-        document.getElementById("note-freq").textContent = result.hz.toFixed(1) + " Hz";
-        updateNoteDisplay(match.note, result.hz);
-      }
-    } else {
-      candidate      = null;
-      candidateCount = 0;
-      if (!holdNote) {
-        document.getElementById("note-freq").textContent = result.hz.toFixed(1) + " Hz (out of range)";
-      }
-    }
-  }
-
-  setTimeout(detectPitch, 35);
+function showNote(note, hz) {
+  activeNote = note;
+  const name = document.getElementById("note-name");
+  name.textContent = note || "–";
+  name.style.color = note ? "var(--accent)" : "var(--text)";
+  document.getElementById("note-freq").textContent = note ? hz.toFixed(1) + " Hz" : "";
+  updateNoteDisplay(note, hz);
 }
 
-// Pitch = the fundamental, not simply the loudest peak.
-// A reed (and a small tablet microphone, which weakens low tones) often makes the
-// 2nd or 3rd harmonic louder than the fundamental; the loudest peak is then an
-// octave (or a twelfth) too high. So after finding the loudest peak fp, look below
-// it: the lowest fp/k (k = 6..2) that is a note of the instrument and has a real
-// peak of its own is the fundamental. "Real" = clearly above the local noise floor
-// and not more than SUB_RANGE dB weaker than the loudest peak.
-const SUB_MAX_K   = 6;    // highest harmonic number that may pass for the loudest peak
-const SUB_RANGE   = 30;   // dB a fundamental may be weaker than its loudest harmonic
-const SUB_PROMINENCE = 12; // dB a fundamental must stand above the noise around it
+const mic = Pitch.createListener({
+  threshold: () => parseInt(document.getElementById("thresh-slider").value) / 1000,
+  onLevel:   rms => { document.getElementById("vol-bar").style.height = Math.min(100, rms / 0.1 * 100) + "%"; },
+  onNote:    showNote,
+  onUnknown: hz => { if (!activeNote) document.getElementById("note-freq").textContent = hz.toFixed(1) + " Hz (out of range)"; },
+});
+const timeBuf = mic.timeBuf;   // the waveform shows what the microphone hears
 
-function detectFFTPeak() {
-  const freqBuf = new Float32Array(analyser.frequencyBinCount);
-  analyser.getFloatFrequencyData(freqBuf);   // dB values
-  return findFundamental(freqBuf, audioCtx.sampleRate / analyser.fftSize);
-}
-
-// freqBuf: spectrum in dB, binHz: width of one bin. Returns { hz, clarity } or null.
-function findFundamental(freqBuf, binHz) {
-  const N      = freqBuf.length;
-  const minBin = Math.max(1,   Math.floor(HZ_MIN / binHz));
-  const maxBin = Math.min(N-2, Math.ceil( HZ_MAX / binHz));
-
-  // Loudest peak within the instrument's range
-  let bestBin = minBin, bestVal = -Infinity;
-  for (let i = minBin; i <= maxBin; i++) {
-    if (freqBuf[i] > bestVal) { bestVal = freqBuf[i]; bestBin = i; }
-  }
-
-  // Clarity: peak prominence above the mean of the range (dB). Clean tone: 15+ dB.
-  let mean = 0;
-  for (let i = minBin; i <= maxBin; i++) mean += freqBuf[i];
-  mean /= (maxBin - minBin + 1);
-  const clarity = bestVal - mean;
-
-  const peakHz = interpolate(freqBuf, bestBin) * binHz;
-
-  // Is the loudest peak a harmonic? Try the lowest candidates first.
-  for (let k = SUB_MAX_K; k >= 2; k--) {
-    const note = hzToNote(peakHz / k);
-    if (!note) continue;
-    const b = localMax(freqBuf, Math.round(note.hz / binHz), 2);
-    if (b < 1 || b >= N - 1) continue;
-    if (freqBuf[b] < bestVal - SUB_RANGE) continue;
-    if (freqBuf[b] < noiseFloor(freqBuf, b) + SUB_PROMINENCE) continue;
-    return { hz: interpolate(freqBuf, b) * binHz, clarity };
-  }
-  return { hz: peakHz, clarity };
-}
-
-// Bin of the highest value within +-radius of bin i
-function localMax(buf, i, radius) {
-  let best = i;
-  for (let j = Math.max(1, i - radius); j <= Math.min(buf.length - 2, i + radius); j++) if (buf[j] > buf[best]) best = j;
-  return best;
-}
-
-// Median level around bin i (a third of an octave each way), leaving out the peak itself
-function noiseFloor(buf, i) {
-  const lo = Math.max(1, Math.floor(i / 1.26)), hi = Math.min(buf.length - 1, Math.ceil(i * 1.26));
-  const vals = [];
-  for (let j = lo; j <= hi; j++) if (Math.abs(j - i) > 3) vals.push(buf[j]);
-  vals.sort((x, y) => x - y);
-  return vals.length ? vals[vals.length >> 1] : -Infinity;
-}
-
-// Parabolic interpolation around a peak bin, for sub-bin accuracy
-function interpolate(buf, i) {
-  const y1 = buf[i - 1], y2 = buf[i], y3 = buf[i + 1];
-  const denom = 2 * y2 - y1 - y3;
-  return denom > 0 ? i + (y1 - y3) / (2 * denom) : i;
-}
-
-// =============================================================================
-//  Mic on/off
-// =============================================================================
 async function toggleMic() {
   const btn = document.getElementById("mic-btn");
   const msg = document.getElementById("status-msg");
 
-  if (isRunning) {
-    // Stop
-    isRunning = false;
+  if (mic.running) {
+    mic.stop();
     document.body.classList.remove("listening");
-    if (micStream) micStream.getTracks().forEach(t => t.stop());
-    if (audioCtx)  audioCtx.close();
-    audioCtx = analyser = micStream = null;
     btn.textContent = "▶ Start";
     btn.classList.remove("active");
-    activeNote = null;
+    showNote(null, 0);
     msg.textContent = "Microphone stopped.";
-    document.getElementById("note-name").textContent = "–";
-    document.getElementById("note-name").style.color = "var(--text)";
-    document.getElementById("note-freq").textContent = "";
     document.getElementById("vol-bar").style.height = "0%";
-    return;
-  }
-
-  // Start: the browser only offers the microphone on https:// (or localhost)
-  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    msg.textContent = "The microphone needs a secure page: open this page via https://.";
     return;
   }
   try {
     msg.textContent = "Requesting microphone access…";
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-    analyser  = audioCtx.createAnalyser();
-    analyser.fftSize = BUFFER_SIZE * 2;   // 16384 → bin width ~2.7 Hz
-
-    audioCtx.createMediaStreamSource(micStream).connect(analyser);
-
-    isRunning = true;
+    await mic.start();
     document.body.classList.add("listening");
     btn.textContent = "■ Stop";
     btn.classList.add("active");
-    msg.textContent = `Listening… (${audioCtx.sampleRate} Hz)`;
-
-    detectPitch();
-  } catch(e) {
-    msg.textContent = e.name === "NotAllowedError"  ? "Microphone access was blocked. Allow it in the browser's address bar and try again."
-                    : e.name === "NotFoundError"    ? "No microphone found."
-                    : "Could not start the microphone: " + e.message;
+    msg.textContent = `Listening… (${mic.sampleRate} Hz)` + (hasStoredLayout() ? ` · layout "${LAYOUT_NAME}"` : "");
+  } catch (e) {
+    msg.textContent = e.message;
   }
 }
 
@@ -891,6 +690,7 @@ document.getElementById("thresh-slider").addEventListener("input", function() {
 //  Boot
 // =============================================================================
 window.addEventListener("resize", () => { layoutButtons(); drawFrame(); resizeWaveform(); });
+if (hasStoredLayout()) document.getElementById("status-msg").textContent = `Layout "${LAYOUT_NAME}" · click Start to open the microphone`;
 layoutButtons();
 resizeWaveform();
 animationLoop();
