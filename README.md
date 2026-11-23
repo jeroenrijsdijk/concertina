@@ -36,6 +36,7 @@ The repository is the whole website [jeroenrijsdijk.nl](https://jeroenrijsdijk.n
 | `concertina/pitch.js` | Microphone → note of the instrument (fundamental, not the loudest harmonic); used by Listen and by the practice view's Follow me |
 | `concertina/help.html` | Help page and manual |
 | `concertina/keys.js` | The button layout (`KEYS_DATA`), note helpers, and your own uploaded layout (checked and kept in the browser for every page) |
+| `concertina/version.js` | The version number shown on every page — raise it with every change (2.12 → 2.13 → …) |
 | `concertina/style.css` | Shared look of all pages (colours, header, buttons) |
 | `concertina/vendor/abcjs-basic-min.js` | The [abcjs](https://abcjs.net) library (v6.6.3, MIT; licence in `vendor/abcjs-LICENSE.txt`) |
 | `concertina/vendor/fonts/` | Oswald and Source Code Pro, self-hosted (SIL Open Font License), so no visitor data goes to Google |
