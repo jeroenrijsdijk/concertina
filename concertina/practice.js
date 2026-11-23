@@ -6,7 +6,7 @@
 //  onHook("analysed" | "cursor" | "mode"); it changes nothing in the tool itself.
 // =============================================================================
 (function () {
-  if (typeof onHook !== "function") return;     // concertina.html did not load
+  if (!window.toolReady) return;                 // concertina.html did not (completely) load
 
   const ROW_NAMES = ["", "t", "c", "g"];
   const CARDS     = [0, 1, 2].map(i => document.getElementById("card-" + i));
@@ -158,7 +158,7 @@
 //  so holding one note never counts twice.
 // =============================================================================
 (function () {
-  if (typeof onHook !== "function" || typeof Pitch === "undefined") return;
+  if (!window.toolReady || typeof Pitch === "undefined") return;
 
   const btn   = document.getElementById("p-follow");
   const heard = document.getElementById("p-heard");

@@ -47,6 +47,15 @@ explain_certificate() {
   echo "     or set the variable DEPLOY_VERIFY_TLS to no (still encrypted, host not checked)."
 }
 
+# Cache busting: the pages ask for keys.js?v=dev etc.; on the website that becomes the
+# commit, so a browser never mixes a new page with an old script it has kept.
+# Only on GitHub, where the checkout is a throw-away copy (never in your own folder).
+if [ "${GITHUB_ACTIONS:-}" = true ]; then
+  VERSION="${GITHUB_SHA:0:8}"
+  find . -name '*.html' -not -path './.git/*' -exec sed -i "s/?v=dev\"/?v=$VERSION\"/g" {} +
+  echo "Version $VERSION"
+fi
+
 echo "Uploading to $URL$DEPLOY_DIR"
 # The password comes from the environment (LFTP_PASSWORD), never from the command line
 if ! lftp -c "
