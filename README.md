@@ -51,23 +51,7 @@ The Kesh Jig is pre-loaded as an example.
 
 To use your own tune, paste any ABC notation into the text area. Thousands of tunes in ABC format are available at [thesession.org](https://thesession.org) and [abcnotation.com](https://abcnotation.com).
 
-## Publishing
 
-`.github/workflows/deploy.yml` runs after every push or merge to `main` (or by hand: *Actions → Deploy website → Run workflow*). It runs `.github/deploy.sh`, which uploads the site with `lftp` over FTP (TLS when the host offers it), FTPS or SFTP. It only uploads and overwrites; nothing on the host is deleted, so other files on the site stay. The pages ask for their scripts and stylesheets as `keys.js?v=dev`; on upload `dev` becomes the commit, so a browser never mixes a new page with an old script from its cache.
-
-Settings, under *Settings → Secrets and variables → Actions*:
-
-| Kind | Name | Example |
-|---|---|---|
-| secret | `DEPLOY_SERVER` | `ftp.example.nl` |
-| secret | `DEPLOY_USER` | your FTP login |
-| secret | `DEPLOY_PASSWORD` | your FTP password |
-| variable | `DEPLOY_DIR` | `/public_html` (the website folder on the host) |
-| variable | `DEPLOY_PROTOCOL` | `ftp` (default), `ftps` or `sftp` |
-| variable | `DEPLOY_PORT` | only for a non-standard port |
-| variable | `DEPLOY_VERIFY_TLS` | `no` if the host's certificate does not match its name |
-
-To publish by hand instead: copy the repository as it is, without `README.md`, `LICENSE` and `.github/`.
 
 ## How the algorithm works
 
